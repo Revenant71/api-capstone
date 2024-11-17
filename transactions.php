@@ -12,7 +12,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
     switch ($method) {
         case 'GET':
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-            $found_id = $URI_array[3];
+            $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
             $qy = "SELECT * FROM `transactions`";
         
@@ -50,10 +50,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $created_at = date('Y-m-d H:i:s');
             $updated_at = date('Y-m-d H:i:s');
 
-            $stmt->bindParam(':doc_type', $transaction->req_doctype); // follow form field name
-            $stmt->bindParam(':id_client', $transaction->req_studentid); // follow form field name
-            $stmt->bindParam(':name_client', $transaction->req_name); // follow form field name
-            $stmt->bindParam(':email_client', $transaction->req_email); // follow form field name
+            $stmt->bindParam(':doc_type', $transaction->documentType);
+            $stmt->bindParam(':id_client', $transaction->studentId);
+            $stmt->bindParam(':name_client', $transaction->nameOwner);
+            // TODO column + bind for course 
+            $stmt->bindParam(':email_client', $transaction->email);            
             $stmt->bindParam(':phone_client', $transaction->req_phone); // follow form field name
             $stmt->bindParam(':title_request', $transaction->req_title); // follow form field name
             $stmt->bindParam(':desc_request', $transaction->req_body); // follow form field name

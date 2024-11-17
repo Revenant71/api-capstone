@@ -17,13 +17,13 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($variable) {
     case 'GET':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_id = $URI_array[3];
+        $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
         $qy = "SELECT * FROM users";
         if (isLoggedUserSet() && is_numeric($found_id)) {
             /* given user id */
             $qy .= "WHERE id = :id";
-            $stmt = $db_connection->prepare($qy);
+            $stmt = $db_connection->prepare(query: $qy);
             $stmt->bindParam(':id', $found_id);
             $stmt->execute();
             $response = $stmt->fetchAll(PDO::FETCH_ASSOC);

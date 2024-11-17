@@ -1,6 +1,6 @@
 <?php
 require_once('connectDb.php');
-header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: *");
 header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
@@ -11,8 +11,9 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
     $method = $_SERVER['REQUEST_METHOD'];
     switch ($method) {
         case 'GET':
+            // FIXME 
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-            $found_id = $URI_array[3];
+            $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
             $qy = "SELECT * FROM categories_docs";
 
