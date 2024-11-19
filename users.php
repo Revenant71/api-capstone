@@ -82,6 +82,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             remember_token=:remember, updated_at=:updated WHERE id=:id";
 
             $hash_pass = password_hash($user->staffPass, PASSWORD_BCRYPT);
+            $role = "EMPLOYEE";
             $token = createRememberToken();
             $updated_at = date('Y-m-d H:i:s');
 
@@ -94,7 +95,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':name', $user->staffName);
             $stmt->bindParam(':email', $user->staffEmail);
             $stmt->bindParam(':pass', $hash_pass);
-            $stmt->bindParam(':role', $user->staffRole);
+            $stmt->bindParam(':role', $role); // $user->staffRole
             $stmt->bindParam(':remember', $token);
             $stmt->bindParam(':updated', $updated_at);
             
