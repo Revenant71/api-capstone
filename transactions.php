@@ -35,12 +35,12 @@ switch ($method) {
         $transaction = json_decode(file_get_contents('php://input'));
 
         $qy = "INSERT INTO transactions(
-            id_doc, email_req, id_swu, name_owner, course, 
+            id_doc, reference_number, email_req, id_swu, name_owner, course, 
             purpose_req, desc_req, filepath_receipt, 
             statusPayment, statusTransit, id_employee, 
             created_at, updated_at
         ) VALUES (
-            :id_doc, :email_req, :id_swu, :name_owner, :course, 
+            :id_doc, :num_ref, :email_req, :id_swu, :name_owner, :course, 
             :purpose_req, :desc_req, :filepath_receipt, 
             :status_payment, :status_transit, :id_employee, 
             :created_at, :updated_at
@@ -52,16 +52,17 @@ switch ($method) {
         $status_transit = "Request Placed";
         $created_at = date('Y-m-d H:i:s');
         $updated_at = date('Y-m-d H:i:s');
-        $document_emptypath = null; // in a new request no file is attached yet
+        $emptypath = null; // in a new request no document and no receipt are attached yet
 
-        $stmt->bindParam(':id_doc', $document_emptypath, PDO::PARAM_NULL);
+        $stmt->bindParam(':id_doc', $emptypath, PDO::PARAM_NULL);
+        $stmt->bindParam(':num_ref', $transaction->referenceNumber, PDO::PARAM_STR);
         $stmt->bindParam(':email_req', $transaction->email_req, PDO::PARAM_STR);
         $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
         $stmt->bindParam(':name_owner', $transaction->name_owner, PDO::PARAM_STR);
         $stmt->bindParam(':course', $transaction->course, PDO::PARAM_STR);
         $stmt->bindParam(':purpose_req', $transaction->purpose_req, PDO::PARAM_STR);
         $stmt->bindParam(':desc_req', $transaction->desc_req, PDO::PARAM_STR);
-        $stmt->bindParam(':filepath_receipt', $transaction->filepath_receipt, PDO::PARAM_STR);
+        $stmt->bindParam(':filepath_receipt', $emptypath, PDO::PARAM_NULL);
         $stmt->bindParam(':status_payment', $status_payment, PDO::PARAM_STR);
         $stmt->bindParam(':status_transit', $status_transit, PDO::PARAM_STR);
         $stmt->bindParam(':id_employee', $transaction->id_employee, PDO::PARAM_INT);
@@ -97,14 +98,14 @@ switch ($method) {
         $updated_at = date('Y-m-d H:i:s');
 
         $stmt->bindParam(':id', $found_id, PDO::PARAM_INT); 
-        $stmt->bindParam(':id_doc', $transaction->id_doc, PDO::PARAM_INT);
+        $stmt->bindParam(':id_doc', $transaction->id_doc, PDO::PARAM_INT); // TODO refer to employee/admin CRUD
         $stmt->bindParam(':email_req', $transaction->email, PDO::PARAM_STR);
         $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
         $stmt->bindParam(':name_owner', $transaction->name_owner, PDO::PARAM_STR);
         $stmt->bindParam(':course', $transaction->course, PDO::PARAM_STR);
         $stmt->bindParam(':purpose_req', $transaction->purpose_req, PDO::PARAM_STR);
         $stmt->bindParam(':desc_req', $transaction->desc_req, PDO::PARAM_STR);
-        $stmt->bindParam(':filepath_receipt', $transaction->filepath_receipt, PDO::PARAM_STR);
+        $stmt->bindParam(':filepath_receipt', $transaction->filepath_receipt, PDO::PARAM_STR); // TODO refer to upload receipt component
         $stmt->bindParam(':status_payment', $transaction->statusPayment, PDO::PARAM_STR);
         $stmt->bindParam(':status_transit', $transaction->statusTransit, PDO::PARAM_STR);
         $stmt->bindParam(':id_employee', $transaction->id_employee, PDO::PARAM_INT);
