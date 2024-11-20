@@ -40,7 +40,7 @@ switch ($method) {
             statusPayment, statusTransit, id_employee, 
             created_at, updated_at
         ) VALUES (
-            :id_doc, :num_ref, :email_req, :id_swu, :name_owner, :course, 
+            :id_doc, :ref_number, :email_req, :id_swu, :name_owner, :course, 
             :purpose_req, :desc_req, :filepath_receipt, 
             :status_payment, :status_transit, :id_employee, 
             :created_at, :updated_at
@@ -55,8 +55,8 @@ switch ($method) {
         $emptypath = null; // in a new request no document and no receipt are attached yet
 
         $stmt->bindParam(':id_doc', $emptypath, PDO::PARAM_NULL);
-        $stmt->bindParam(':num_ref', $transaction->referenceNumber, PDO::PARAM_STR);
-        $stmt->bindParam(':email_req', $transaction->email_req, PDO::PARAM_STR);
+        $stmt->bindParam(':ref_number', $transaction->referenceNumber, PDO::PARAM_STR);
+        $stmt->bindParam(':email_req', $transaction->email, PDO::PARAM_STR);
         $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
         $stmt->bindParam(':name_owner', $transaction->name_owner, PDO::PARAM_STR);
         $stmt->bindParam(':course', $transaction->course, PDO::PARAM_STR);
