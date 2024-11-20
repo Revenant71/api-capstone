@@ -52,8 +52,9 @@ switch ($method) {
         $status_transit = "Request Placed";
         $created_at = date('Y-m-d H:i:s');
         $updated_at = date('Y-m-d H:i:s');
+        $document_emptypath = null; // in a new request no file is attached yet
 
-        $stmt->bindParam(':id_doc', $transaction->id_doc, PDO::PARAM_INT);
+        $stmt->bindParam(':id_doc', $document_emptypath, PDO::PARAM_NULL);
         $stmt->bindParam(':email_req', $transaction->email_req, PDO::PARAM_STR);
         $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
         $stmt->bindParam(':name_owner', $transaction->name_owner, PDO::PARAM_STR);
@@ -95,9 +96,9 @@ switch ($method) {
 
         $updated_at = date('Y-m-d H:i:s');
 
-        $stmt->bindParam(':id', $found_id, PDO::PARAM_INT);
+        $stmt->bindParam(':id', $found_id, PDO::PARAM_INT); 
         $stmt->bindParam(':id_doc', $transaction->id_doc, PDO::PARAM_INT);
-        $stmt->bindParam(':email_req', $transaction->email_req, PDO::PARAM_STR);
+        $stmt->bindParam(':email_req', $transaction->email, PDO::PARAM_STR);
         $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
         $stmt->bindParam(':name_owner', $transaction->name_owner, PDO::PARAM_STR);
         $stmt->bindParam(':course', $transaction->course, PDO::PARAM_STR);
