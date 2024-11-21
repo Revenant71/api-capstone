@@ -11,7 +11,6 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
     $method = $_SERVER['REQUEST_METHOD'];
     switch ($method) {
         case 'GET':
-            // FIXME 
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 

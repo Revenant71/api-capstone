@@ -22,7 +22,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $qy = "SELECT * FROM users";
 
             if ($found_id && is_numeric($found_id)) {
-                $qy .= "WHERE id=:id";
+                $qy .= " WHERE id=:id";
                 $stmt = $db_connection->prepare($qy);
                 $stmt->bindParam(':id', $found_id);
                 $stmt->execute();
