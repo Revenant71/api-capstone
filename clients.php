@@ -74,8 +74,21 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
+            
             // TODO form field "file_pfp" file upload into column "img_profile"
-            $qy = "UPDATE clients SET name=:name, email=:email,
+            // Handle base64 file decoding
+            if (!empty($client->file_pfp)) {
+                $base64String = $client->file_pfp;
+                // TODO folder for file uploads, separate folders for clients and users
+                $uploadDir = 'uploads/clients'; // Ensure this directory exists and is writable
+                $fileName = uniqid() . '.png'; // Customize file extension as needed
+                $filePath = $uploadDir . $fileName;
+
+                $fileData = explode(',', $base64String)[1]; // Remove the base64 prefix
+                file_put_contents($filePath, base64_decode($fileData));
+            }
+
+            $qy = "UPDATE clients SET img_profile=:=file_pfp, name=:name, email=:email,
             password=:pass, remember_token=:remember, updated_at=:updated WHERE id=:id";
 
             $hash_pass = password_hash($client->clientPass, PASSWORD_BCRYPT);
@@ -87,6 +100,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             }
 
             $stmt = $db_connection->prepare($qy);
+            $stmt->bindParam(':img_profile', $filePath);
             $stmt->bindParam(':name', $client->name);
             $stmt->bindParam(':email', $client->email);
             $stmt->bindParam(':pass', $hash_pass);

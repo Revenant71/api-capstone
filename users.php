@@ -76,8 +76,21 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
+            
             // TODO form field "file_pfp" file upload into column "img_profile"
-            $qy = "UPDATE users SET name=:name, email=:email,
+            // Handle base64 file decoding
+            if (!empty($user->file_pfp)) {
+                $base64String = $user->file_pfp;
+                // TODO folder for file uploads, separate folders for clients and users
+                $uploadDir = 'uploads/users'; // Ensure this directory exists and is writable
+                $fileName = uniqid() . '.png'; // Customize file extension as needed
+                $filePath = $uploadDir . $fileName;
+
+                $fileData = explode(',', $base64String)[1]; // Remove the base64 prefix
+                file_put_contents($filePath, base64_decode($fileData));
+            }            
+
+            $qy = "UPDATE users SET img_profile=:=file_pfp, name=:name, email=:email,
             password=:pass, account_type=:role,
             remember_token=:remember, updated_at=:updated WHERE id=:id";
 
@@ -90,7 +103,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             }
 
             $stmt = $db_connection->prepare($qy);
-            // TODO refer to the name attributes in edit staff account form fields
+            $stmt->bindParam(':img_profile', $filePath);
             $stmt->bindParam(':name', $user->name);
             $stmt->bindParam(':email', $user->email);
             $stmt->bindParam(':pass', $hash_pass);
