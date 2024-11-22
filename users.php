@@ -2,7 +2,7 @@
 require_once('connectDb.php');
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, enctype");
 header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
     
     $db_attempt = new connectDb;
@@ -76,7 +76,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
-
+            // TODO form field "file_pfp" file upload into column "img_profile"
             $qy = "UPDATE users SET name=:name, email=:email,
             password=:pass, account_type=:role,
             remember_token=:remember, updated_at=:updated WHERE id=:id";
