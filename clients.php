@@ -19,7 +19,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $URI_array = explode('/', string: $_SERVER['REQUEST_URI']);
             $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
-            $qy = "SELECT * FROM users";
+            $qy = "SELECT * FROM clients";
 
             if ($found_id && is_numeric($found_id)) {
                 $qy .= " WHERE id=:id";
@@ -38,50 +38,47 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
         
         // For Registrar to create new staff accounts
         case 'POST':
-            $user = json_decode(file_get_contents('php://input'));
+            $client = json_decode(file_get_contents('php://input'));
             
-            $qy = "INSERT INTO users(name, email, email_verified_at,
-            password, account_type, remember_token,
+            $qy = "INSERT INTO clients(name, email, 
+            password, remember_token,
             created_at, updated_at) 
-            VALUES(:name, :email, :verified, :pass,
-            :role, :remember, :created, :updated)";
+            VALUES(:name, :email, :pass,
+            :remember, :created, :updated)";
             
-            $hash_pass = password_hash($user->staffPass, PASSWORD_BCRYPT);
+            $hash_pass = password_hash($client->clientPass, PASSWORD_BCRYPT);
             $token = createRememberToken();
             $created_at = date('Y-m-d H:i:s');            
             $updated_at = date('Y-m-d H:i:s');
 
             $stmt = $db_connection->prepare($qy);
-            // TODO refer to the name attributes in create new staff account form fields
-            $stmt->bindParam(':name', $user->staffName);
-            $stmt->bindParam(':email', $user->staffEmail);
-            $stmt->bindParam(':verified', $created_at); // TODO verification feature (one time email?)
+            // TODO refer to the name attributes in create new client account form fields
+            $stmt->bindParam(':name', $client->clientName);
+            $stmt->bindParam(':email', $client->clientEmail);
             $stmt->bindParam(':pass', $hash_pass); 
-            $stmt->bindParam(':role', $user->staffRole); 
             $stmt->bindParam(':remember', $token);
             $stmt->bindParam(':created', $created_at); 
             $stmt->bindParam(':updated', $updated_at);
 
             if ($stmt->execute()) {
-                $response = ['status'=>1, 'message'=>'POST user successful.'];
+                $response = ['status'=>1, 'message'=>'POST client successful.'];
             } else {
-                $response = ['status'=>0, 'message'=>'SORRY, POST user failed.'];
+                $response = ['status'=>0, 'message'=>'SORRY, POST client failed.'];
             }
             
             echo json_encode($response);
             break;
 
         case 'PATCH':
-            $user = json_decode(file_get_contents('php://input'));
+            $client = json_decode(file_get_contents('php://input'));
 
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
 
-            $qy = "UPDATE users SET name=:name, email=:email,
-            password=:pass, account_type=:role,
-            remember_token=:remember, updated_at=:updated WHERE id=:id";
+            $qy = "UPDATE clients SET name=:name, email=:email,
+            password=:pass, remember_token=:remember, updated_at=:updated WHERE id=:id";
 
-            $hash_pass = password_hash($user->staffPass, PASSWORD_BCRYPT);
+            $hash_pass = password_hash($client->clientPass, PASSWORD_BCRYPT);
             $token = createRememberToken();
             $updated_at = date('Y-m-d H:i:s');
 
@@ -90,18 +87,16 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             }
 
             $stmt = $db_connection->prepare($qy);
-            // TODO refer to the name attributes in edit staff account form fields
-            $stmt->bindParam(':name', $user->name);
-            $stmt->bindParam(':email', $user->email);
+            $stmt->bindParam(':name', $client->name);
+            $stmt->bindParam(':email', $client->email);
             $stmt->bindParam(':pass', $hash_pass);
-            $stmt->bindParam(':role', $user->role); // TODO pass hardcoded role from JS sessionstorage
             $stmt->bindParam(':remember', $token);
             $stmt->bindParam(':updated', $updated_at);
             
             if ($stmt->execute()) {
-                $response = ['status'=>1, 'message'=>'PATCH user successful.'];
+                $response = ['status'=>1, 'message'=>'PATCH client successful.'];
             } else {
-                $response = ['status'=>0, 'message'=>'SORRY, PATCH user failed.'];
+                $response = ['status'=>0, 'message'=>'SORRY, PATCH client failed.'];
             }
 
             echo json_encode($response);
@@ -111,15 +106,15 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
 
-            $qy = "DELETE FROM users WHERE id=:id";
+            $qy = "DELETE FROM clients WHERE id=:id";
 
             $stmt = $db_connection->prepare($qy);
             $stmt->bindParam(':id', $found_id);
 
             if($stmt->execute()){
-                $response = ['status'=>1, 'message'=>'DELETE user successful.'];    
+                $response = ['status'=>1, 'message'=>'DELETE client successful.'];    
             } else {
-                $response = ['status'=>0, 'message'=>'Oops! DELETE user failed.'];
+                $response = ['status'=>0, 'message'=>'Oops! DELETE client failed.'];
             }
 
             echo json_encode($response);
