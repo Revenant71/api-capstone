@@ -16,7 +16,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
     $method = $_SERVER['REQUEST_METHOD'];
     switch ($method) {
         case 'GET':
-            $URI_array = explode('/', string: $_SERVER['REQUEST_URI']);
+            $URI_array = explode(separator: '/', string: $_SERVER['REQUEST_URI']);
             $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
             $qy = "SELECT * FROM users";
