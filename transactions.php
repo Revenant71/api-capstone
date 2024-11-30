@@ -12,15 +12,15 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+        $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
 
-        if (isset($found_id) && is_numeric($found_id)) {
+        if (isset($found_reference_no) && is_numeric($found_reference_no)) {
             $qy = "
             SELECT * 
             FROM `transactions` AS TCN
             LEFT JOIN `documents` AS DOC
             ON TCN.id_doc = DOC.id
-            WHERE TCN.id = :id OR DOC.id = :id
+            WHERE TCN.reference_number = :reference
             
             UNION
             
@@ -28,11 +28,11 @@ switch ($method) {
             FROM `transactions` AS TCN
             RIGHT JOIN `documents` AS DOC
             ON TCN.id_doc = DOC.id
-            WHERE TCN.id = :id OR DOC.id = :id
+            WHERE TCN.reference_number = :reference
             ";
 
             $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':id', $found_id, PDO::PARAM_INT);
+            $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_INT);
             $stmt->execute();
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
         } else {
@@ -111,7 +111,7 @@ switch ($method) {
         $transaction = json_decode(file_get_contents('php://input'));
 
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+        $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
 
         $qy = "UPDATE transactions AS TCN
         LEFT JOIN documents AS DOC
@@ -130,13 +130,13 @@ switch ($method) {
             TCN.statusTransit = :status_transit, 
             TCN.id_employee = :id_employee, 
             TCN.updated_at = :updated_at
-        WHERE TCN.id = :id OR DOC.id = :id";
+        WHERE TCN.reference_number = :reference";
 
         $stmt = $db_connection->prepare($qy);
 
         $updated_at = date('Y-m-d H:i:s');
 
-        $stmt->bindParam(':id', $found_id, PDO::PARAM_INT); 
+        $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_INT); 
         $stmt->bindParam(':id_doc', $transaction->id_doc, PDO::PARAM_INT); // TODO refer to employee/admin CRUD
         $stmt->bindParam(':email_req', $transaction->email, PDO::PARAM_STR);
         $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
@@ -162,12 +162,12 @@ switch ($method) {
 
     case 'DELETE':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+        $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
 
-        $qy = "DELETE FROM transactions WHERE id = :id";
+        $qy = "DELETE FROM transactions WHERE reference_number = :reference";
 
         $stmt = $db_connection->prepare($qy);
-        $stmt->bindParam(':id', $found_id, PDO::PARAM_INT);
+        $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
             $response = ['status' => 1, 'message' => 'DELETE successful.'];
