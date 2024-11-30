@@ -61,6 +61,7 @@ switch ($method) {
     case 'POST':
         $transaction = json_decode(file_get_contents('php://input'));
 
+        // TODO catg_req column
         $qy = "INSERT INTO transactions(
             id_doc, reference_number, email_req, id_swu, name_owner, course, 
             purpose_req, desc_req, filepath_receipt, 
@@ -87,6 +88,7 @@ switch ($method) {
         $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
         $stmt->bindParam(':name_owner', $transaction->name_owner, PDO::PARAM_STR);
         $stmt->bindParam(':course', $transaction->course, PDO::PARAM_STR);
+        // $stmt->bindParam(':catg_req', $transaction->type_document, PDO::PARAM_STR);
         $stmt->bindParam(':purpose_req', $transaction->purpose_req, PDO::PARAM_STR);
         $stmt->bindParam(':desc_req', $transaction->desc_req, PDO::PARAM_STR);
         $stmt->bindParam(':filepath_receipt', $emptypath, PDO::PARAM_NULL);
@@ -111,7 +113,6 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
-        // TODO join transactions and doc where id_doc from transactions = id from documents
         $qy = "UPDATE transactions AS TCN
         LEFT JOIN documents AS DOC
         ON TCN.id_doc = DOC.id
@@ -120,7 +121,8 @@ switch ($method) {
             TCN.email_req = :email_req, 
             TCN.id_swu = :id_swu, 
             TCN.name_owner = :name_owner, 
-            TCN.course = :course, 
+            TCN.course = :course,
+            -- TCN.catg_req = :catg_req,
             TCN.purpose_req = :purpose_req, 
             TCN.desc_req = :desc_req, 
             TCN.filepath_receipt = :filepath_receipt, 
@@ -140,7 +142,8 @@ switch ($method) {
         $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
         $stmt->bindParam(':name_owner', $transaction->name_owner, PDO::PARAM_STR);
         $stmt->bindParam(':course', $transaction->course, PDO::PARAM_STR);
-        $stmt->bindParam(':purpose_req', $transaction->purpose_req, PDO::PARAM_STR);
+        // $stmt->bindParam(':catg_req', $transaction->type_document, PDO::PARAM_STR);
+        $stmt->bindParam(':purpose_req', $transaction->purpose, PDO::PARAM_STR);
         $stmt->bindParam(':desc_req', $transaction->desc_req, PDO::PARAM_STR);
         $stmt->bindParam(':filepath_receipt', $transaction->filepath_receipt, PDO::PARAM_STR); // TODO refer to upload receipt component
         $stmt->bindParam(':status_payment', $transaction->statusPayment, PDO::PARAM_STR);
