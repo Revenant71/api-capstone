@@ -20,7 +20,7 @@ session_start();
             
             $qy = "SELECT * FROM users WHERE email = :mail";
             $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':mail', $received_email);
+            $stmt->bindParam(':mail', var: $received_email);
             $stmt->execute();
             
             $found_user = $stmt->fetch(PDO::FETCH_ASSOC);

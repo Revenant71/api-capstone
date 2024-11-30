@@ -14,15 +14,42 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
-        $qy = "SELECT * FROM `transactions`";
-
         if (isset($found_id) && is_numeric($found_id)) {
-            $qy .= " WHERE id = :id";
+            $qy = "
+            SELECT * 
+            FROM `transactions` AS TCN
+            LEFT JOIN `documents` AS DOC
+            ON TCN.id_doc = DOC.id
+            WHERE TCN.id = :id OR DOC.id = :id
+            
+            UNION
+            
+            SELECT * 
+            FROM `transactions` AS TCN
+            RIGHT JOIN `documents` AS DOC
+            ON TCN.id_doc = DOC.id
+            WHERE TCN.id = :id OR DOC.id = :id
+            ";
+
             $stmt = $db_connection->prepare($qy);
             $stmt->bindParam(':id', $found_id, PDO::PARAM_INT);
             $stmt->execute();
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
         } else {
+            $qy = "
+            SELECT * 
+            FROM `transactions` AS TCN
+            LEFT JOIN `documents` AS DOC
+            ON TCN.id_doc = DOC.id
+
+            UNION
+
+            SELECT * 
+            FROM `transactions` AS TCN
+            RIGHT JOIN `documents` AS DOC
+            ON TCN.id_doc = DOC.id
+            ";
+
             $stmt = $db_connection->prepare($qy);
             $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -34,6 +61,7 @@ switch ($method) {
     case 'POST':
         $transaction = json_decode(file_get_contents('php://input'));
 
+        // TODO join transactions and doc where id_doc from transactions = id from documents
         $qy = "INSERT INTO transactions(
             id_doc, reference_number, email_req, id_swu, name_owner, course, 
             purpose_req, desc_req, filepath_receipt, 
@@ -84,6 +112,7 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
+        // TODO join transactions and doc where id_doc from transactions = id from documents
         $qy = "UPDATE transactions SET 
             id_doc = :id_doc, email_req = :email_req, id_swu = :id_swu, 
             name_owner = :name_owner, course = :course, 
@@ -124,6 +153,7 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
+        // TODO join transactions and doc where id_doc from transactions = id from documents
         $qy = "DELETE FROM transactions WHERE id = :id";
 
         $stmt = $db_connection->prepare($qy);
