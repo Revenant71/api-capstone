@@ -113,24 +113,22 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
 
-        $qy = "UPDATE transactions AS TCN
-        LEFT JOIN documents AS DOC
-        ON TCN.id_doc = DOC.id
+        $qy = "UPDATE transactions 
         SET 
-            TCN.id_doc = :id_doc, 
-            TCN.email_req = :email_req, 
-            TCN.id_swu = :id_swu, 
-            TCN.name_owner = :name_owner, 
-            TCN.course = :course,
-            -- TCN.catg_req = :catg_req,
-            TCN.purpose_req = :purpose_req, 
-            TCN.desc_req = :desc_req, 
-            TCN.filepath_receipt = :filepath_receipt, 
-            TCN.statusPayment = :status_payment, 
-            TCN.statusTransit = :status_transit, 
-            TCN.id_employee = :id_employee, 
-            TCN.updated_at = :updated_at
-        WHERE TCN.reference_number = :reference";
+            id_doc = :id_doc, 
+            email_req = :email_req, 
+            id_swu = :id_swu, 
+            name_owner = :name_owner, 
+            course = :course, 
+            -- catg_req = :catg_req, 
+            purpose_req = :purpose_req, 
+            desc_req = :desc_req, 
+            filepath_receipt = :filepath_receipt, 
+            statusPayment = :status_payment, 
+            statusTransit = :status_transit, 
+            id_employee = :id_employee, 
+            updated_at = :updated_at
+        WHERE reference_number = :reference";
 
         $stmt = $db_connection->prepare($qy);
 
@@ -164,7 +162,11 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
 
-        $qy = "DELETE FROM transactions WHERE reference_number = :reference";
+        $qy = "SELECT * 
+        FROM transactions AS TCN
+        LEFT JOIN documents AS DOC
+        ON TCN.id_doc = DOC.id
+        WHERE TCN.reference_number = :reference";
 
         $stmt = $db_connection->prepare($qy);
         $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_INT);
