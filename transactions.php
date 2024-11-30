@@ -61,7 +61,6 @@ switch ($method) {
     case 'POST':
         $transaction = json_decode(file_get_contents('php://input'));
 
-        // TODO join transactions and doc where id_doc from transactions = id from documents
         $qy = "INSERT INTO transactions(
             id_doc, reference_number, email_req, id_swu, name_owner, course, 
             purpose_req, desc_req, filepath_receipt, 
@@ -113,14 +112,23 @@ switch ($method) {
         $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
         // TODO join transactions and doc where id_doc from transactions = id from documents
-        $qy = "UPDATE transactions SET 
-            id_doc = :id_doc, email_req = :email_req, id_swu = :id_swu, 
-            name_owner = :name_owner, course = :course, 
-            purpose_req = :purpose_req, desc_req = :desc_req, 
-            filepath_receipt = :filepath_receipt, statusPayment = :status_payment, 
-            statusTransit = :status_transit, id_employee = :id_employee, 
-            updated_at = :updated_at 
-            WHERE id = :id";
+        $qy = "UPDATE transactions AS TCN
+        LEFT JOIN documents AS DOC
+        ON TCN.id_doc = DOC.id
+        SET 
+            TCN.id_doc = :id_doc, 
+            TCN.email_req = :email_req, 
+            TCN.id_swu = :id_swu, 
+            TCN.name_owner = :name_owner, 
+            TCN.course = :course, 
+            TCN.purpose_req = :purpose_req, 
+            TCN.desc_req = :desc_req, 
+            TCN.filepath_receipt = :filepath_receipt, 
+            TCN.statusPayment = :status_payment, 
+            TCN.statusTransit = :status_transit, 
+            TCN.id_employee = :id_employee, 
+            TCN.updated_at = :updated_at
+        WHERE TCN.id = :id OR DOC.id = :id";
 
         $stmt = $db_connection->prepare($qy);
 
@@ -153,7 +161,6 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
-        // TODO join transactions and doc where id_doc from transactions = id from documents
         $qy = "DELETE FROM transactions WHERE id = :id";
 
         $stmt = $db_connection->prepare($qy);
