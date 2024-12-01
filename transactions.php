@@ -153,41 +153,49 @@ switch ($method) {
     case 'POST': // TODO refer to new fields in FormRequest.js
         $transaction = json_decode(file_get_contents('php://input'));
 
-        $qy = "INSERT INTO transactions(
-            id_doc, reference_number, email_req, id_swu, name_owner, course, 
-            catg_req, purpose_req, desc_req, filepath_receipt, 
-            statusPayment, statusTransit, id_employee, 
+        $qy = "INSERT INTO transactions (
+            reference_number, id_doc, name_req, phone_req, email_req,
+            id_swu, id_owner, name_owner, phone_owner, course,
+            catg_req, purpose_req, desc_req, filepath_receipt,
+            statusPayment, statusTransit, id_employee, overdue_days, 
             created_at, updated_at
         ) VALUES (
-            :id_doc, :ref_number, :email_req, :id_swu, :name_owner, :course, 
-            :catg_req, :purpose_req, :desc_req, :filepath_receipt, 
-            :status_payment, :status_transit, :id_employee, 
+            :reference_number, :id_doc, :name_req, :phone_req, :email_req,
+            :id_swu, :id_owner, :name_owner, :phone_owner, :course,
+            :catg_req, :purpose_req, :desc_req, :filepath_receipt,
+            :statusPayment, :statusTransit, :id_employee, :overdue_days,
             :created_at, :updated_at
         )";
-
+    
         $stmt = $db_connection->prepare($qy);
-
-        $status_payment = "Not Paid";
-        $status_transit = "Request Placed";
+    
+        $reference_number = uniqid('REF-');
+        $statusPayment = 'Not Paid';
+        $statusTransit = 'Request Placed';
+        $overdue_days = 0;
         $created_at = date('Y-m-d H:i:s');
         $updated_at = date('Y-m-d H:i:s');
-        $emptypath = null; // in a new request no document and no receipt are attached yet
-
-        $stmt->bindParam(':id_doc', $emptypath, PDO::PARAM_NULL);
-        $stmt->bindParam(':ref_number', $transaction->reference_number, PDO::PARAM_STR);
-        $stmt->bindParam(':email_req', $transaction->email_req, PDO::PARAM_STR);
-        $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
-        $stmt->bindParam(':name_owner', $transaction->name_owner, PDO::PARAM_STR);
-        $stmt->bindParam(':course', $transaction->course, PDO::PARAM_STR);
-        $stmt->bindParam(':catg_req', $transaction->type_document, PDO::PARAM_STR);
-        $stmt->bindParam(':purpose_req', $transaction->purpose_req, PDO::PARAM_STR);
-        $stmt->bindParam(':desc_req', $transaction->desc_req, PDO::PARAM_STR);
-        $stmt->bindParam(':filepath_receipt', $emptypath, PDO::PARAM_NULL);
-        $stmt->bindParam(':status_payment', $status_payment, PDO::PARAM_STR);
-        $stmt->bindParam(':status_transit', $status_transit, PDO::PARAM_STR);
-        $stmt->bindParam(':id_employee', $$emptypath, PDO::PARAM_INT);
-        $stmt->bindParam(':created_at', $created_at, PDO::PARAM_STR);
-        $stmt->bindParam(':updated_at', $updated_at, PDO::PARAM_STR);
+    
+        $stmt->bindParam(':reference_number', $reference_number);
+        $stmt->bindParam(':id_doc', $transaction->id_doc);
+        $stmt->bindParam(':name_req', $transaction->name_req);
+        $stmt->bindParam(':phone_req', $transaction->phone_req);
+        $stmt->bindParam(':email_req', $transaction->email_req);
+        $stmt->bindParam(':id_swu', $transaction->id_swu);
+        $stmt->bindParam(':id_owner', $transaction->id_owner);
+        $stmt->bindParam(':name_owner', $transaction->name_owner);
+        $stmt->bindParam(':phone_owner', $transaction->phone_owner);
+        $stmt->bindParam(':course', $transaction->course);
+        $stmt->bindParam(':catg_req', $transaction->catg_req);
+        $stmt->bindParam(':purpose_req', $transaction->purpose_req);
+        $stmt->bindParam(':desc_req', $transaction->desc_req);
+        $stmt->bindParam(':filepath_receipt', $transaction->filepath_receipt);
+        $stmt->bindParam(':statusPayment', $statusPayment);
+        $stmt->bindParam(':statusTransit', $statusTransit);
+        $stmt->bindParam(':id_employee', $transaction->id_employee);
+        $stmt->bindParam(':overdue_days', $overdue_days);
+        $stmt->bindParam(':created_at', $created_at);
+        $stmt->bindParam(':updated_at', $updated_at);
 
         if ($stmt->execute()) {
             $response = ['status' => 1, 'message' => "POST successful."];
