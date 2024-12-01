@@ -153,15 +153,14 @@ switch ($method) {
     case 'POST':
         $transaction = json_decode(file_get_contents('php://input'));
 
-        // TODO catg_req column
         $qy = "INSERT INTO transactions(
             id_doc, reference_number, email_req, id_swu, name_owner, course, 
-            purpose_req, desc_req, filepath_receipt, 
+            catg_req, purpose_req, desc_req, filepath_receipt, 
             statusPayment, statusTransit, id_employee, 
             created_at, updated_at
         ) VALUES (
             :id_doc, :ref_number, :email_req, :id_swu, :name_owner, :course, 
-            :purpose_req, :desc_req, :filepath_receipt, 
+            :catg_req, :purpose_req, :desc_req, :filepath_receipt, 
             :status_payment, :status_transit, :id_employee, 
             :created_at, :updated_at
         )";
@@ -180,7 +179,7 @@ switch ($method) {
         $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
         $stmt->bindParam(':name_owner', $transaction->name_owner, PDO::PARAM_STR);
         $stmt->bindParam(':course', $transaction->course, PDO::PARAM_STR);
-        // $stmt->bindParam(':catg_req', $transaction->type_document, PDO::PARAM_STR);
+        $stmt->bindParam(':catg_req', $transaction->type_document, PDO::PARAM_STR);
         $stmt->bindParam(':purpose_req', $transaction->purpose_req, PDO::PARAM_STR);
         $stmt->bindParam(':desc_req', $transaction->desc_req, PDO::PARAM_STR);
         $stmt->bindParam(':filepath_receipt', $emptypath, PDO::PARAM_NULL);
