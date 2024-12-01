@@ -150,7 +150,7 @@ switch ($method) {
         echo json_encode($data);
         break;
 
-    case 'POST': // TODO refer to new fields in FormRequest.js
+    case 'POST':
         $transaction = json_decode(file_get_contents('php://input'));
 
         $qy = "INSERT INTO transactions (
@@ -169,30 +169,32 @@ switch ($method) {
     
         $stmt = $db_connection->prepare($qy);
     
-        $reference_number = uniqid('REF-');
+        // $reference_number = uniqid('REF-');
         $statusPayment = 'Not Paid';
         $statusTransit = 'Request Placed';
-        $overdue_days = 0;
         $created_at = date('Y-m-d H:i:s');
         $updated_at = date('Y-m-d H:i:s');
-    
-        $stmt->bindParam(':reference_number', $reference_number);
-        $stmt->bindParam(':id_doc', $transaction->id_doc);
+        $overdue_days = 0;
+        $emptypath = null;
+        
+        // TODO check which columns accept null
+        $stmt->bindParam(':reference_number', $transaction->reference_number);
+        $stmt->bindParam(':id_doc', $$emptypath);
         $stmt->bindParam(':name_req', $transaction->name_req);
         $stmt->bindParam(':phone_req', $transaction->phone_req);
         $stmt->bindParam(':email_req', $transaction->email_req);
         $stmt->bindParam(':id_swu', $transaction->id_swu);
-        $stmt->bindParam(':id_owner', $transaction->id_owner);
+        $stmt->bindParam(':id_owner', $emptypath);
         $stmt->bindParam(':name_owner', $transaction->name_owner);
         $stmt->bindParam(':phone_owner', $transaction->phone_owner);
         $stmt->bindParam(':course', $transaction->course);
         $stmt->bindParam(':catg_req', $transaction->catg_req);
         $stmt->bindParam(':purpose_req', $transaction->purpose_req);
         $stmt->bindParam(':desc_req', $transaction->desc_req);
-        $stmt->bindParam(':filepath_receipt', $transaction->filepath_receipt);
+        $stmt->bindParam(':filepath_receipt', $emptypath);
         $stmt->bindParam(':statusPayment', $statusPayment);
         $stmt->bindParam(':statusTransit', $statusTransit);
-        $stmt->bindParam(':id_employee', $transaction->id_employee);
+        $stmt->bindParam(':id_employee', $emptypath);
         $stmt->bindParam(':overdue_days', $overdue_days);
         $stmt->bindParam(':created_at', $created_at);
         $stmt->bindParam(':updated_at', $updated_at);
