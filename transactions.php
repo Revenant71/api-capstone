@@ -74,7 +74,7 @@ switch ($method) {
             FROM `transactions` AS TCN
             RIGHT JOIN `documents` AS DOC
             ON TCN.id_doc = DOC.id
-            WHERE TCN.reference_number = :reference
+            WHERE TCN.reference_number = :reference;
             ";
 
             $stmt = $db_connection->prepare($qy);
@@ -139,7 +139,7 @@ switch ($method) {
             DOC.author DOC_author        
             FROM `transactions` AS TCN
             RIGHT JOIN `documents` AS DOC
-            ON TCN.id_doc = DOC.id
+            ON TCN.id_doc = DOC.id;
             ";
 
             $stmt = $db_connection->prepare($qy);
