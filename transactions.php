@@ -150,7 +150,7 @@ switch ($method) {
         echo json_encode($data);
         break;
 
-    case 'POST':
+    case 'POST': // TODO refer to new fields in FormRequest.js
         $transaction = json_decode(file_get_contents('php://input'));
 
         $qy = "INSERT INTO transactions(
@@ -174,8 +174,8 @@ switch ($method) {
         $emptypath = null; // in a new request no document and no receipt are attached yet
 
         $stmt->bindParam(':id_doc', $emptypath, PDO::PARAM_NULL);
-        $stmt->bindParam(':ref_number', $transaction->referenceNumber, PDO::PARAM_STR);
-        $stmt->bindParam(':email_req', $transaction->email, PDO::PARAM_STR);
+        $stmt->bindParam(':ref_number', $transaction->reference_number, PDO::PARAM_STR);
+        $stmt->bindParam(':email_req', $transaction->email_req, PDO::PARAM_STR);
         $stmt->bindParam(':id_swu', $transaction->id_swu, PDO::PARAM_INT);
         $stmt->bindParam(':name_owner', $transaction->name_owner, PDO::PARAM_STR);
         $stmt->bindParam(':course', $transaction->course, PDO::PARAM_STR);
@@ -185,7 +185,7 @@ switch ($method) {
         $stmt->bindParam(':filepath_receipt', $emptypath, PDO::PARAM_NULL);
         $stmt->bindParam(':status_payment', $status_payment, PDO::PARAM_STR);
         $stmt->bindParam(':status_transit', $status_transit, PDO::PARAM_STR);
-        $stmt->bindParam(':id_employee', $transaction->id_employee, PDO::PARAM_INT);
+        $stmt->bindParam(':id_employee', $$emptypath, PDO::PARAM_INT);
         $stmt->bindParam(':created_at', $created_at, PDO::PARAM_STR);
         $stmt->bindParam(':updated_at', $updated_at, PDO::PARAM_STR);
 

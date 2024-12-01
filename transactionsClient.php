@@ -14,7 +14,7 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_id_client = isset($URI_array[3]) ? $URI_array[3] : null;
 
-        $qy = "SELECT * 
+        $qy = "SELECT 
             TCN.id TCN_id,
             TCN.reference_number TCN_reference_number,
             TCN.id_doc TCN_id_doc,
@@ -41,8 +41,7 @@ switch ($method) {
             C.email C_email,
             C.phone C_phone
             FROM `transactions` AS TCN
-            INNER JOIN `clients` AS C
-        FROM `transactions`
+            INNER JOIN `clients` AS C ON TCN.id_owner = C.id
         ";
 
         if (isset($found_id_client) && is_numeric($found_id_client)) {
