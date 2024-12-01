@@ -16,7 +16,30 @@ switch ($method) {
 
         if (isset($found_reference_no) && is_numeric($found_reference_no)) {
             $qy = "
-            SELECT * 
+            SELECT
+            TCN.id TCN_id,
+            TCN.reference_number TCN_reference_number,
+            TCN.id_doc TCN_id_doc,
+            TCN.name_req TCN_name_req,
+            TCN.phone_req TCN_phone_req,
+            TCN.email_req TCN_email_req,
+            TCN.id_swu TCN_id_swu,
+            TCN.id_owner TCN_id_owner,
+            TCN.name_owner TCN_name_owner,
+            TCN.phone_owner TCN_phone_owner,
+            TCN.course TCN_course,
+            TCN.catg_req TCN_catg_req,
+            TCN.purpose_req TCN_purpose_req,
+            TCN.desc_req TCN_desc_req,
+            TCN.filepath_receipt TCN_filepath_receipt,
+            TCN.statusPayment TCN_statusPayment,
+            TCN.statusTransit TCN_statusTransit,
+            TCN.id_employee TCN_id_employee,
+            TCN.overdue_days TCN_overdue_days,
+            TCN.created_at TCN_created_at,
+            TCN.updated_at TCN_updated_at,
+            DOC.title DOC_title,
+            DOC.author DOC_author
             FROM `transactions` AS TCN
             LEFT JOIN `documents` AS DOC
             ON TCN.id_doc = DOC.id
@@ -24,7 +47,30 @@ switch ($method) {
             
             UNION
             
-            SELECT * 
+            SELECT
+            TCN.id TCN_id,
+            TCN.reference_number TCN_reference_number,
+            TCN.id_doc TCN_id_doc,
+            TCN.name_req TCN_name_req,
+            TCN.phone_req TCN_phone_req,
+            TCN.email_req TCN_email_req,
+            TCN.id_swu TCN_id_swu,
+            TCN.id_owner TCN_id_owner,
+            TCN.name_owner TCN_name_owner,
+            TCN.phone_owner TCN_phone_owner,
+            TCN.course TCN_course,
+            TCN.catg_req TCN_catg_req,
+            TCN.purpose_req TCN_purpose_req,
+            TCN.desc_req TCN_desc_req,
+            TCN.filepath_receipt TCN_filepath_receipt,
+            TCN.statusPayment TCN_statusPayment,
+            TCN.statusTransit TCN_statusTransit,
+            TCN.id_employee TCN_id_employee,
+            TCN.overdue_days TCN_overdue_days,
+            TCN.created_at TCN_created_at,
+            TCN.updated_at TCN_updated_at,
+            DOC.title DOC_title,
+            DOC.author DOC_author
             FROM `transactions` AS TCN
             RIGHT JOIN `documents` AS DOC
             ON TCN.id_doc = DOC.id
@@ -37,14 +83,60 @@ switch ($method) {
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
         } else {
             $qy = "
-            SELECT * 
+            SELECT
+            TCN.id TCN_id,
+            TCN.reference_number TCN_reference_number,
+            TCN.id_doc TCN_id_doc,
+            TCN.name_req TCN_name_req,
+            TCN.phone_req TCN_phone_req,
+            TCN.email_req TCN_email_req,
+            TCN.id_swu TCN_id_swu,
+            TCN.id_owner TCN_id_owner,
+            TCN.name_owner TCN_name_owner,
+            TCN.phone_owner TCN_phone_owner,
+            TCN.course TCN_course,
+            TCN.catg_req TCN_catg_req,
+            TCN.purpose_req TCN_purpose_req,
+            TCN.desc_req TCN_desc_req,
+            TCN.filepath_receipt TCN_filepath_receipt,
+            TCN.statusPayment TCN_statusPayment,
+            TCN.statusTransit TCN_statusTransit,
+            TCN.id_employee TCN_id_employee,
+            TCN.overdue_days TCN_overdue_days,
+            TCN.created_at TCN_created_at,
+            TCN.updated_at TCN_updated_at,
+            DOC.title DOC_title,
+            DOC.author DOC_author        
             FROM `transactions` AS TCN
             LEFT JOIN `documents` AS DOC
             ON TCN.id_doc = DOC.id
 
             UNION
 
-            SELECT * 
+            SELECT
+            TCN.id TCN_id,
+            TCN.reference_number TCN_reference_number,
+            TCN.id_doc TCN_id_doc,
+            TCN.name_req TCN_name_req,
+            TCN.phone_req TCN_phone_req,
+            TCN.email_req TCN_email_req,
+            TCN.id_swu TCN_id_swu,
+            TCN.id_owner TCN_id_owner,
+            TCN.name_owner TCN_name_owner,
+            TCN.phone_owner TCN_phone_owner,
+            TCN.course TCN_course,
+            TCN.catg_req TCN_catg_req,
+            TCN.purpose_req TCN_purpose_req,
+            TCN.desc_req TCN_desc_req,
+            TCN.filepath_receipt TCN_filepath_receipt,
+            TCN.statusPayment TCN_statusPayment,
+            TCN.statusTransit TCN_statusTransit,
+            TCN.id_employee TCN_id_employee,
+            TCN.overdue_days TCN_overdue_days,
+            TCN.created_at TCN_created_at,
+            TCN.updated_at TCN_updated_at,
+            DOC.title DOC_title,
+            DOC.author DOC_author        
             FROM `transactions` AS TCN
             RIGHT JOIN `documents` AS DOC
             ON TCN.id_doc = DOC.id
