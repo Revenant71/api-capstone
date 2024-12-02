@@ -150,7 +150,6 @@ switch ($method) {
         echo json_encode($data);
         break;
 
-    // FIXME
     case 'POST':
         $transaction = json_decode(file_get_contents('php://input'));
 
