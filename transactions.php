@@ -150,6 +150,7 @@ switch ($method) {
         echo json_encode($data);
         break;
 
+    // FIXME
     case 'POST':
         $transaction = json_decode(file_get_contents('php://input'));
 
@@ -169,7 +170,6 @@ switch ($method) {
     
         $stmt = $db_connection->prepare($qy);
     
-        // $reference_number = uniqid('REF-');
         $statusPayment = 'Not Paid';
         $statusTransit = 'Request Placed';
         $created_at = date('Y-m-d H:i:s');
@@ -177,35 +177,33 @@ switch ($method) {
         $overdue_days = 0;
         $emptypath = null;
         
-        // TODO check which columns accept null
         $stmt->bindParam(':reference_number', $transaction->reference_number);
-        $stmt->bindParam(':id_doc', $$emptypath);
+        $stmt->bindParam(':id_doc', $emptypath, PDO::PARAM_NULL);
         $stmt->bindParam(':name_req', $transaction->name_req);
         $stmt->bindParam(':phone_req', $transaction->phone_req);
         $stmt->bindParam(':email_req', $transaction->email_req);
         $stmt->bindParam(':id_swu', $transaction->id_swu);
-        $stmt->bindParam(':id_owner', $emptypath);
+        $stmt->bindParam(':id_owner', $emptypath, PDO::PARAM_NULL);
         $stmt->bindParam(':name_owner', $transaction->name_owner);
         $stmt->bindParam(':phone_owner', $transaction->phone_owner);
         $stmt->bindParam(':course', $transaction->course);
         $stmt->bindParam(':catg_req', $transaction->catg_req);
         $stmt->bindParam(':purpose_req', $transaction->purpose_req);
         $stmt->bindParam(':desc_req', $transaction->desc_req);
-        $stmt->bindParam(':filepath_receipt', $emptypath);
+        $stmt->bindParam(':filepath_receipt', $emptypath, PDO::PARAM_NULL);
         $stmt->bindParam(':statusPayment', $statusPayment);
         $stmt->bindParam(':statusTransit', $statusTransit);
-        $stmt->bindParam(':id_employee', $emptypath);
-        $stmt->bindParam(':overdue_days', $overdue_days);
+        $stmt->bindParam(':id_employee', $emptypath, PDO::PARAM_NULL);
+        $stmt->bindParam(':overdue_days', $overdue_days, PDO::PARAM_INT);
         $stmt->bindParam(':created_at', $created_at);
         $stmt->bindParam(':updated_at', $updated_at);
 
         if ($stmt->execute()) {
-            $response = ['status' => 1, 'message' => "POST successful."];
+            echo json_encode(["message" => "Transaction created successfully"]);
         } else {
-            $response = ['status' => 0, 'message' => "POST failed."];
+            echo json_encode(["message" => "Failed to create transaction"]);
         }
 
-        echo json_encode($response);
         break;
 
     case 'PATCH':
