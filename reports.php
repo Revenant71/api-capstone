@@ -6,7 +6,7 @@ header("Access-Control-Allow-Headers: *");
 header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
 $db_attempt = new connectDb;
-$db_connection = $db_attempt->connect();
+$db_connection = $db_attempt->connect(); 
 
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
