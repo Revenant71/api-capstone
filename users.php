@@ -17,7 +17,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
         case 'GET':
             $user = json_decode(file_get_contents('php://input'));
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-            $found_id = $URI_array[3];
+            $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
             $qy = "SELECT * FROM users";
 
@@ -74,7 +74,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             case 'PATCH':
                 $user = json_decode(file_get_contents('php://input'));
                 $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-                $found_id = $URI_array[3];
+                $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
             
                 if (!$found_id || !is_numeric($found_id)) {
                     echo json_encode(['status' => 0, 'message' => 'Invalid or missing ID']);
@@ -121,4 +121,4 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             
             
     }
-?> 
+?>
