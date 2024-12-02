@@ -12,7 +12,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_id_client = isset($URI_array[3]) ? $URI_array[3] : null;
+        $found_id_client = $URI_array[3];
 
         $qy = "SELECT 
             TCN.id TCN_id,

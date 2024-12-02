@@ -12,7 +12,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
+        $found_reference_no = $URI_array[3];
 
         if (isset($found_reference_no) && is_numeric($found_reference_no)) {
             $qy = "
@@ -212,7 +212,7 @@ switch ($method) {
         $transaction = json_decode(file_get_contents('php://input'));
 
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
+        $found_reference_no = $URI_array[3];
 
         $qy = "UPDATE transactions 
         SET 
@@ -261,7 +261,7 @@ switch ($method) {
 
     case 'DELETE':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
+        $found_reference_no = $URI_array[3];
 
         $qy = "SELECT * 
         FROM transactions AS TCN

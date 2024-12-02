@@ -17,7 +17,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($variable) {
     case 'GET':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+        $found_id = $URI_array[3];
 
         $qy = "SELECT * FROM users";
         if (isLoggedUserSet() && is_numeric($found_id)) {
