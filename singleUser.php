@@ -22,7 +22,7 @@ switch ($variable) {
         $qy = "SELECT * FROM users";
         if (isLoggedUserSet() && is_numeric($found_id)) {
             /* given user id */
-            $qy .= "WHERE id = :id";
+            $qy .= " WHERE id = :id";
             $stmt = $db_connection->prepare(query: $qy);
             $stmt->bindParam(':id', $found_id);
             $stmt->execute();

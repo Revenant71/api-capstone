@@ -17,7 +17,6 @@ class User {
             $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
 
             // Prepare the SQL statement
-            // TODO
             $sql = "INSERT INTO users (name, email, password, account_type) VALUES (:name, :email, :password, :account_type)";
             $stmt = $this->conn->prepare($sql);
 
@@ -81,88 +80,11 @@ class Client {
             echo "Error inserting client: " . $e->getMessage();
         }
     }
-
-    // Method to get a client by ID
-    // public function getById($id) {
-    //     try {
-    //         $sql = "SELECT * FROM clients WHERE id = :id";
-    //         $stmt = $this->conn->prepare($sql);
-    //         $stmt->bindParam(':id', $id);
-    //         $stmt->execute();
-
-    //         // Fetch data and assign it to this object's properties
-    //         $client = $stmt->fetch(PDO::FETCH_ASSOC);
-    //         if ($client) {
-    //             $this->id = $client['id'];
-    //             $this->id_swu = $client['id_swu'];
-    //             $this->name = $client['name'];
-    //             $this->email = $client['email'];
-    //             $this->phone = $client['phone'];
-    //             $this->password = $client['password'];
-    //             $this->created_at = $client['created_at'];
-    //             $this->updated_at = $client['updated_at'];
-    //             return true;
-    //         } else {
-    //             return false;
-    //         }
-    //     } catch (PDOException $e) {
-    //         echo "Error fetching client: " . $e->getMessage();
-    //         return false;
-    //     }
-    // }
-
-    // Method to update client information
-    // public function update() {
-    //     try {
-    //         // SQL to update client data
-    //         $sql = "UPDATE clients SET 
-    //                 id_swu = :id_swu, 
-    //                 name = :name, 
-    //                 email = :email, 
-    //                 phone = :phone, 
-    //                 password = :password, 
-    //                 updated_at = :updated_at 
-    //                 WHERE id = :id";
-            
-    //         $stmt = $this->conn->prepare($sql);
-
-    //         // Hash the password if it needs to be updated
-    //         $hashedPassword = password_hash($this->password, PASSWORD_BCRYPT);
-
-    //         // Bind parameters
-    //         $stmt->bindParam(':id', $this->id);
-    //         $stmt->bindParam(':id_swu', $this->id_swu);
-    //         $stmt->bindParam(':name', $this->name);
-    //         $stmt->bindParam(':email', $this->email);
-    //         $stmt->bindParam(':phone', $this->phone);
-    //         $stmt->bindParam(':password', $hashedPassword);
-    //         $stmt->bindParam(':updated_at', $this->updated_at);
-
-    //         // Execute the statement
-    //         return $stmt->execute();
-    //     } catch (PDOException $e) {
-    //         echo "Error updating client: " . $e->getMessage();
-    //         return false;
-    //     }
-    // }
-
-    // // Method to delete a client by ID
-    // public function delete($id) {
-    //     try {
-    //         $sql = "DELETE FROM clients WHERE id = :id";
-    //         $stmt = $this->conn->prepare($sql);
-    //         $stmt->bindParam(':id', $id);
-    //         return $stmt->execute();
-    //     } catch (PDOException $e) {
-    //         echo "Error deleting client: " . $e->getMessage();
-    //         return false;
-    //     }
-    // }
 }
 
 $userAdmin = new User();
-$userAdmin->insertUser('Dr. Angelita Canene', 'apcanene@phinmaed.com', '66tTfqGsYH7M6WcR4dBRwzQIa', 'ADMIN');
+$userAdmin->insertUser('Dr. Angelita Canene', 'apcanene.swu@phinmaed.com', 'canene123', 'ADMIN');
 
 $client = new Client();
-$client->insertClient("test123", "Bu Aang", "bung.aang@phinmaed.com", "1234567890", "client123");
+$client->insertClient("test123", "Bu Aang", "bung.aang.swu@phinmaed.com", "1234567890", "client123");
 ?>

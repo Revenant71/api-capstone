@@ -1,8 +1,7 @@
 <?php
 require_once('connectDb.php');
 header("Access-Control-Allow-Origin: http://localhost:3000");
-header("Content-Type: application/json");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, enctype");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
     
     $db_attempt = new connectDb;
@@ -16,7 +15,8 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
     $method = $_SERVER['REQUEST_METHOD'];
     switch ($method) {
         case 'GET':
-            $URI_array = explode(separator: '/', string: $_SERVER['REQUEST_URI']);
+            $user = json_decode(file_get_contents('php://input'));
+            $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
 
             $qy = "SELECT * FROM users";
@@ -57,7 +57,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':email', $user->staffEmail);
             $stmt->bindParam(':verified', $created_at); // TODO verification feature (one time email?)
             $stmt->bindParam(':pass', $hash_pass); 
-            $stmt->bindParam(':role', $user->staffRole); 
+            $stmt->bindParam(':role', $user->staffRole);
             $stmt->bindParam(':remember', $token);
             $stmt->bindParam(':created', $created_at); 
             $stmt->bindParam(':updated', $updated_at);
@@ -71,71 +71,54 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             echo json_encode($response);
             break;
 
-        case 'PATCH':
-            $user = json_decode(file_get_contents('php://input'));
-
-            $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-            $found_id = $URI_array[3];
+            case 'PATCH':
+                $user = json_decode(file_get_contents('php://input'));
+                $URI_array = explode('/', $_SERVER['REQUEST_URI']);
+                $found_id = $URI_array[3];
             
-            // TODO form field "file_pfp" file upload into column "img_profile"
-            // Handle base64 file decoding
-            if (!empty($user->file_pfp)) {
-                $base64String = $user->file_pfp;
-                // TODO folder for file uploads, separate folders for clients and users
-                $uploadDir = 'uploads/users'; // Ensure this directory exists and is writable
-                $fileName = uniqid() . '.png'; // Customize file extension as needed
-                $filePath = $uploadDir . $fileName;
-
-                $fileData = explode(',', $base64String)[1]; // Remove the base64 prefix
-                file_put_contents($filePath, base64_decode($fileData));
-            }            
-
-            $qy = "UPDATE users SET img_profile=:=file_pfp, name=:name, email=:email,
-            password=:pass, account_type=:role,
-            remember_token=:remember, updated_at=:updated WHERE id=:id";
-
-            $hash_pass = password_hash($user->staffPass, PASSWORD_BCRYPT);
-            $token = createRememberToken();
-            $updated_at = date('Y-m-d H:i:s');
-
-            if ($found_id && is_numeric($found_id)) {
-                $stmt->bindParam(':id', $found_id);
-            }
-
-            $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':img_profile', $filePath);
-            $stmt->bindParam(':name', $user->name);
-            $stmt->bindParam(':email', $user->email);
-            $stmt->bindParam(':pass', $hash_pass);
-            $stmt->bindParam(':role', $user->role); // TODO pass hardcoded role from JS sessionstorage
-            $stmt->bindParam(':remember', $token);
-            $stmt->bindParam(':updated', $updated_at);
+                if (!$found_id || !is_numeric($found_id)) {
+                    echo json_encode(['status' => 0, 'message' => 'Invalid or missing ID']);
+                    exit;
+                }
             
-            if ($stmt->execute()) {
-                $response = ['status'=>1, 'message'=>'PATCH user successful.'];
-            } else {
-                $response = ['status'=>0, 'message'=>'SORRY, PATCH user failed.'];
-            }
-
-            echo json_encode($response);
-            break;
-        
-        case 'DELETE':
-            $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-            $found_id = $URI_array[3];
-
-            $qy = "DELETE FROM users WHERE id=:id";
-
-            $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':id', $found_id);
-
-            if($stmt->execute()){
-                $response = ['status'=>1, 'message'=>'DELETE user successful.'];    
-            } else {
-                $response = ['status'=>0, 'message'=>'Oops! DELETE user failed.'];
-            }
-
-            echo json_encode($response);
-            break;
+                $query = "UPDATE users SET ";
+                $params = [];
+            
+                if (isset($user->staffName)) {
+                    $query .= "name=:name, ";
+                    $params[':name'] = $user->staffName;
+                }
+                if (isset($user->staffEmail)) {
+                    $query .= "email=:email, ";
+                    $params[':email'] = $user->staffEmail;
+                }
+                if (isset($user->staffRole)) {
+                    $query .= "account_type=:role, ";
+                    $params[':role'] = $user->staffRole;
+                }
+                if (isset($user->staffPass)) {
+                    $query .= "password=:pass, ";
+                    $params[':pass'] = password_hash($user->staffPass, PASSWORD_BCRYPT);
+                }
+            
+                $query .= "updated_at=:updated WHERE id=:id";
+                $params[':updated'] = date('Y-m-d H:i:s');
+                $params[':id'] = $found_id;
+            
+                $stmt = $db_connection->prepare($query);
+            
+                if ($stmt->execute($params)) {
+                    $stmt = $db_connection->prepare("SELECT * FROM users WHERE id=:id");
+                    $stmt->bindParam(':id', $found_id);
+                    $stmt->execute();
+                    $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+                    echo json_encode(['status' => 1, 'message' => 'User updated', 'data' => $updatedUser]);
+                } else {
+                    echo json_encode(['status' => 0, 'message' => 'Update failed']);
+                }
+                break;
+            
+            
     }
-?>
+?> 

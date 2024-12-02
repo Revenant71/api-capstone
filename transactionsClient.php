@@ -14,32 +14,33 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_id_client = $URI_array[3];
 
-        $qy = "SELECT 
-            TCN.id TCN_id,
-            TCN.reference_number TCN_reference_number,
-            TCN.id_doc TCN_id_doc,
-            TCN.name_req TCN_name_req,
-            TCN.phone_req TCN_phone_req,
-            TCN.email_req TCN_email_req,
-            TCN.id_swu TCN_id_swu,
-            TCN.id_owner TCN_id_owner,
-            TCN.name_owner TCN_name_owner,
-            TCN.phone_owner TCN_phone_owner,
-            TCN.course TCN_course,
-            TCN.catg_req TCN_catg_req,
-            TCN.purpose_req TCN_purpose_req,
-            TCN.desc_req TCN_desc_req,
-            TCN.filepath_receipt TCN_filepath_receipt,
-            TCN.statusPayment TCN_statusPayment,
-            TCN.statusTransit TCN_statusTransit,
-            TCN.id_employee TCN_id_employee,
-            TCN.overdue_days TCN_overdue_days,
-            TCN.created_at TCN_created_at,
-            TCN.updated_at TCN_updated_at,
-            C.id C_id,
-            C.email C_name,
-            C.email C_email,
-            C.phone C_phone
+        $qy = "
+            SELECT 
+            TCN.id AS TCN_id,
+            TCN.reference_number AS TCN_reference_number,
+            TCN.id_doc AS TCN_id_doc,
+            TCN.name_req AS TCN_name_req,
+            TCN.phone_req AS TCN_phone_req,
+            TCN.email_req AS TCN_email_req,
+            TCN.id_swu AS TCN_id_swu,
+            TCN.id_owner AS TCN_id_owner,
+            TCN.name_owner AS TCN_name_owner,
+            TCN.phone_owner AS TCN_phone_owner,
+            TCN.course AS TCN_course,
+            TCN.catg_req AS TCN_catg_req,
+            TCN.purpose_req AS TCN_purpose_req,
+            TCN.desc_req AS TCN_desc_req,
+            TCN.filepath_receipt AS TCN_filepath_receipt,
+            TCN.statusPayment AS TCN_statusPayment,
+            TCN.statusTransit AS TCN_statusTransit,
+            TCN.id_employee AS TCN_id_employee,
+            TCN.overdue_days AS TCN_overdue_days,
+            TCN.created_at AS TCN_created_at,
+            TCN.updated_at AS TCN_updated_at,
+            C.id AS C_id,
+            C.email AS C_name,
+            C.email AS C_email,
+            C.phone AS C_phone
             FROM `transactions` AS TCN
             INNER JOIN `clients` AS C ON TCN.id_owner = C.id
         ";
@@ -60,7 +61,7 @@ switch ($method) {
         break;
 
 
-    // TODO patch
+    // TODO patch for attach receipt
     case 'PATCH':
         // modify some request details here
          

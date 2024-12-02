@@ -17,29 +17,29 @@ switch ($method) {
         if (isset($found_reference_no) && is_numeric($found_reference_no)) {
             $qy = "
             SELECT
-            TCN.id TCN_id,
-            TCN.reference_number TCN_reference_number,
-            TCN.id_doc TCN_id_doc,
-            TCN.name_req TCN_name_req,
-            TCN.phone_req TCN_phone_req,
-            TCN.email_req TCN_email_req,
-            TCN.id_swu TCN_id_swu,
-            TCN.id_owner TCN_id_owner,
-            TCN.name_owner TCN_name_owner,
-            TCN.phone_owner TCN_phone_owner,
-            TCN.course TCN_course,
-            TCN.catg_req TCN_catg_req,
-            TCN.purpose_req TCN_purpose_req,
-            TCN.desc_req TCN_desc_req,
-            TCN.filepath_receipt TCN_filepath_receipt,
-            TCN.statusPayment TCN_statusPayment,
-            TCN.statusTransit TCN_statusTransit,
-            TCN.id_employee TCN_id_employee,
-            TCN.overdue_days TCN_overdue_days,
-            TCN.created_at TCN_created_at,
-            TCN.updated_at TCN_updated_at,
-            DOC.title DOC_title,
-            DOC.author DOC_author
+            TCN.id AS TCN_id,
+            TCN.reference_number AS TCN_reference_number,
+            TCN.id_doc AS TCN_id_doc,
+            TCN.name_req AS TCN_name_req,
+            TCN.phone_req AS TCN_phone_req,
+            TCN.email_req AS TCN_email_req,
+            TCN.id_swu AS TCN_id_swu,
+            TCN.id_owner AS TCN_id_owner,
+            TCN.name_owner AS TCN_name_owner,
+            TCN.phone_owner AS TCN_phone_owner,
+            TCN.course AS TCN_course,
+            TCN.catg_req AS TCN_catg_req,
+            TCN.purpose_req AS TCN_purpose_req,
+            TCN.desc_req AS TCN_desc_req,
+            TCN.filepath_receipt AS TCN_filepath_receipt,
+            TCN.statusPayment AS TCN_statusPayment,
+            TCN.statusTransit AS TCN_statusTransit,
+            TCN.id_employee AS TCN_id_employee,
+            TCN.overdue_days AS TCN_overdue_days,
+            TCN.created_at AS TCN_created_at,
+            TCN.updated_at AS TCN_updated_at,
+            DOC.title AS DOC_title,
+            DOC.author AS DOC_author
             FROM `transactions` AS TCN
             LEFT JOIN `documents` AS DOC
             ON TCN.id_doc = DOC.id
@@ -48,29 +48,29 @@ switch ($method) {
             UNION
             
             SELECT
-            TCN.id TCN_id,
-            TCN.reference_number TCN_reference_number,
-            TCN.id_doc TCN_id_doc,
-            TCN.name_req TCN_name_req,
-            TCN.phone_req TCN_phone_req,
-            TCN.email_req TCN_email_req,
-            TCN.id_swu TCN_id_swu,
-            TCN.id_owner TCN_id_owner,
-            TCN.name_owner TCN_name_owner,
-            TCN.phone_owner TCN_phone_owner,
-            TCN.course TCN_course,
-            TCN.catg_req TCN_catg_req,
+            TCN.id AS TCN_id,
+            TCN.reference_number AS TCN_reference_number,
+            TCN.id_doc AS TCN_id_doc,
+            TCN.name_req AS TCN_name_req,
+            TCN.phone_req AS TCN_phone_req,
+            TCN.email_req AS TCN_email_req,
+            TCN.id_swu AS TCN_id_swu,
+            TCN.id_owner AS TCN_id_owner,
+            TCN.name_owner AS TCN_name_owner,
+            TCN.phone_owner AS TCN_phone_owner,
+            TCN.course AS TCN_course,
+            TCN.catg_req AS TCN_catg_req,
             TCN.purpose_req TCN_purpose_req,
-            TCN.desc_req TCN_desc_req,
-            TCN.filepath_receipt TCN_filepath_receipt,
-            TCN.statusPayment TCN_statusPayment,
-            TCN.statusTransit TCN_statusTransit,
-            TCN.id_employee TCN_id_employee,
-            TCN.overdue_days TCN_overdue_days,
-            TCN.created_at TCN_created_at,
-            TCN.updated_at TCN_updated_at,
-            DOC.title DOC_title,
-            DOC.author DOC_author
+            TCN.desc_req AS TCN_desc_req,
+            TCN.filepath_receipt AS TCN_filepath_receipt,
+            TCN.statusPayment AS TCN_statusPayment,
+            TCN.statusTransit AS TCN_statusTransit,
+            TCN.id_employee AS TCN_id_employee,
+            TCN.overdue_days AS TCN_overdue_days,
+            TCN.created_at AS TCN_created_at,
+            TCN.updated_at AS TCN_updated_at,
+            DOC.title AS DOC_title,
+            DOC.author AS DOC_author
             FROM `transactions` AS TCN
             RIGHT JOIN `documents` AS DOC
             ON TCN.id_doc = DOC.id
@@ -84,29 +84,29 @@ switch ($method) {
         } else {
             $qy = "
             SELECT
-            TCN.id TCN_id,
-            TCN.reference_number TCN_reference_number,
-            TCN.id_doc TCN_id_doc,
-            TCN.name_req TCN_name_req,
-            TCN.phone_req TCN_phone_req,
-            TCN.email_req TCN_email_req,
-            TCN.id_swu TCN_id_swu,
-            TCN.id_owner TCN_id_owner,
-            TCN.name_owner TCN_name_owner,
-            TCN.phone_owner TCN_phone_owner,
-            TCN.course TCN_course,
-            TCN.catg_req TCN_catg_req,
-            TCN.purpose_req TCN_purpose_req,
-            TCN.desc_req TCN_desc_req,
-            TCN.filepath_receipt TCN_filepath_receipt,
-            TCN.statusPayment TCN_statusPayment,
-            TCN.statusTransit TCN_statusTransit,
-            TCN.id_employee TCN_id_employee,
-            TCN.overdue_days TCN_overdue_days,
-            TCN.created_at TCN_created_at,
-            TCN.updated_at TCN_updated_at,
-            DOC.title DOC_title,
-            DOC.author DOC_author        
+            TCN.id AS TCN_id,
+            TCN.reference_number AS TCN_reference_number,
+            TCN.id_doc AS TCN_id_doc,
+            TCN.name_req AS TCN_name_req,
+            TCN.phone_req AS TCN_phone_req,
+            TCN.email_req AS TCN_email_req,
+            TCN.id_swu AS TCN_id_swu,
+            TCN.id_owner AS TCN_id_owner,
+            TCN.name_owner AS TCN_name_owner,
+            TCN.phone_owner AS TCN_phone_owner,
+            TCN.course AS TCN_course,
+            TCN.catg_req AS TCN_catg_req,
+            TCN.purpose_req AS TCN_purpose_req,
+            TCN.desc_req AS TCN_desc_req,
+            TCN.filepath_receipt AS TCN_filepath_receipt,
+            TCN.statusPayment AS TCN_statusPayment,
+            TCN.statusTransit AS TCN_statusTransit,
+            TCN.id_employee AS TCN_id_employee,
+            TCN.overdue_days AS TCN_overdue_days,
+            TCN.created_at AS TCN_created_at,
+            TCN.updated_at AS TCN_updated_at,
+            DOC.title AS DOC_title,
+            DOC.author AS DOC_author        
             FROM `transactions` AS TCN
             LEFT JOIN `documents` AS DOC
             ON TCN.id_doc = DOC.id
@@ -114,27 +114,27 @@ switch ($method) {
             UNION
 
             SELECT
-            TCN.id TCN_id,
-            TCN.reference_number TCN_reference_number,
-            TCN.id_doc TCN_id_doc,
-            TCN.name_req TCN_name_req,
-            TCN.phone_req TCN_phone_req,
-            TCN.email_req TCN_email_req,
-            TCN.id_swu TCN_id_swu,
-            TCN.id_owner TCN_id_owner,
-            TCN.name_owner TCN_name_owner,
-            TCN.phone_owner TCN_phone_owner,
-            TCN.course TCN_course,
-            TCN.catg_req TCN_catg_req,
-            TCN.purpose_req TCN_purpose_req,
-            TCN.desc_req TCN_desc_req,
-            TCN.filepath_receipt TCN_filepath_receipt,
-            TCN.statusPayment TCN_statusPayment,
-            TCN.statusTransit TCN_statusTransit,
-            TCN.id_employee TCN_id_employee,
-            TCN.overdue_days TCN_overdue_days,
-            TCN.created_at TCN_created_at,
-            TCN.updated_at TCN_updated_at,
+            TCN.id AS TCN_id,
+            TCN.reference_number AS TCN_reference_number,
+            TCN.id_doc AS TCN_id_doc,
+            TCN.name_req AS TCN_name_req,
+            TCN.phone_req AS TCN_phone_req,
+            TCN.email_req AS TCN_email_req,
+            TCN.id_swu AS TCN_id_swu,
+            TCN.id_owner AS TCN_id_owner,
+            TCN.name_owner AS TCN_name_owner,
+            TCN.phone_owner AS TCN_phone_owner,
+            TCN.course AS TCN_course,
+            TCN.catg_req AS TCN_catg_req,
+            TCN.purpose_req AS TCN_purpose_req,
+            TCN.desc_req AS TCN_desc_req,
+            TCN.filepath_receipt AS TCN_filepath_receipt,
+            TCN.statusPayment AS TCN_statusPayment,
+            TCN.statusTransit AS TCN_statusTransit,
+            TCN.id_employee AS TCN_id_employee,
+            TCN.overdue_days AS TCN_overdue_days,
+            TCN.created_at AS TCN_created_at,
+            TCN.updated_at AS TCN_updated_at,
             DOC.title DOC_title,
             DOC.author DOC_author        
             FROM `transactions` AS TCN
@@ -204,7 +204,8 @@ switch ($method) {
         }
 
         break;
-
+    
+    // TODO include request category
     case 'PATCH':
         $transaction = json_decode(file_get_contents('php://input'));
 
@@ -260,14 +261,14 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3];
 
-        $qy = "SELECT * 
+        $qy = "
+        DELETE 
         FROM transactions AS TCN
-        LEFT JOIN documents AS DOC
-        ON TCN.id_doc = DOC.id
-        WHERE TCN.reference_number = :reference";
+        WHERE TCN.reference_number = :reference
+        ";
 
         $stmt = $db_connection->prepare($qy);
-        $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_INT);
+        $stmt->bindParam(':reference', $found_reference_no);
 
         if ($stmt->execute()) {
             $response = ['status' => 1, 'message' => 'DELETE successful.'];
