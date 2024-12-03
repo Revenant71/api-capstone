@@ -27,10 +27,20 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 $stmt->bindParam(':id', $found_id);
                 $stmt->execute();
                 $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($data && isset($data['img_profile'])) {
+                    $data['img_profile'] = base64_encode($data['img_profile']);
+                }
             } else {
                 $stmt = $db_connection->prepare($qy);
                 $stmt->execute();
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($data as &$row) {
+                    if (isset($row['img_profile'])) {
+                        $row['img_profile'] = base64_encode($row['img_profile']);
+                    }
+                }
             }
         
             echo json_encode($data);
