@@ -12,14 +12,15 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_reference_no = $URI_array[3] ?? null;
+        $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
 
         if (isset($found_reference_no) && is_numeric($found_reference_no)) {
             $qy = "
             SELECT 
                 TCN.*, 
                 DOC.title AS DOC_title, 
-                DOC.author AS DOC_author
+                DOC.author AS DOC_author,
+                DOC.category_id AS DOC_category_id
             FROM transactions TCN
             LEFT JOIN documents DOC ON TCN.id_doc = DOC.id
             WHERE TCN.reference_number = :reference
@@ -27,7 +28,8 @@ switch ($method) {
             SELECT 
                 TCN.*, 
                 DOC.title AS DOC_title, 
-                DOC.author AS DOC_author
+                DOC.author AS DOC_author,
+                DOC.category_id AS DOC_category_id
             FROM transactions TCN
             RIGHT JOIN documents DOC ON TCN.id_doc = DOC.id
             WHERE TCN.reference_number = :reference;
@@ -36,20 +38,22 @@ switch ($method) {
             $stmt = $db_connection->prepare($qy);
             $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_INT);
             $stmt->execute();
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $data = $stmt->fetch(PDO::FETCH_ASSOC);
         } else {
             $qy = "
             SELECT 
                 TCN.*, 
                 DOC.title AS DOC_title, 
-                DOC.author AS DOC_author
+                DOC.author AS DOC_author,
+                DOC.category_id AS DOC_category_id
             FROM transactions TCN
             LEFT JOIN documents DOC ON TCN.id_doc = DOC.id
             UNION
             SELECT 
                 TCN.*, 
                 DOC.title AS DOC_title, 
-                DOC.author AS DOC_author
+                DOC.author AS DOC_author,
+                DOC.category_id AS DOC_category_id
             FROM transactions TCN
             RIGHT JOIN documents DOC ON TCN.id_doc = DOC.id;
             ";
@@ -84,7 +88,6 @@ switch ($method) {
 
         $default_values = [
             ':id_doc' => null,
-            ':id_owner' => null,
             ':filepath_receipt' => null,
             ':id_employee' => null,
             ':overdue_days' => 0,
@@ -100,6 +103,7 @@ switch ($method) {
             ':phone_req' => $transaction['phone_req'],
             ':email_req' => $transaction['email_req'],
             ':id_swu' => $transaction['id_swu'],
+            ':id_owner' => $transaction['id_owner'],
             ':name_owner' => $transaction['name_owner'],
             ':phone_owner' => $transaction['phone_owner'],
             ':course' => $transaction['course'],
@@ -133,7 +137,8 @@ switch ($method) {
             course = :course, 
             purpose_req = :purpose_req, 
             desc_req = :desc_req, 
-            filepath_receipt = :filepath_receipt, 
+            filepath_receipt = :filepath_receipt,
+
             statusPayment = :statusPayment, 
             statusTransit = :statusTransit, 
             id_employee = :id_employee, 

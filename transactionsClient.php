@@ -14,6 +14,7 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_id_client = $URI_array[3];
 
+        // TODO Where id_owner == sessionStorage.getItem("id_user")
         $qy = "
             SELECT 
             TCN.id AS TCN_id,
@@ -43,19 +44,13 @@ switch ($method) {
             C.phone AS C_phone
             FROM `transactions` AS TCN
             INNER JOIN `clients` AS C ON TCN.id_owner = C.id
+            WHERE TCN.id_owner = :id
         ";
 
-        if (isset($found_id_client) && is_numeric($found_id_client)) {
-            $qy .= " WHERE TCN.id_owner = :id";
-            $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':id', $found_id_client, PDO::PARAM_INT);
-            $stmt->execute();
-            $data = $stmt->fetch(PDO::FETCH_ASSOC);
-        } else {
-            $stmt = $db_connection->prepare($qy);
-            $stmt->execute();
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
+        $stmt = $db_connection->prepare($qy);
+        $stmt->bindParam(':id', $found_id_client, PDO::PARAM_INT);
+        $stmt->execute();
+        $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         echo json_encode($data);
         break;
