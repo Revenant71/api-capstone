@@ -40,12 +40,17 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
         case 'POST':
             $user = json_decode(file_get_contents('php://input'));
             
-            $qy = "INSERT INTO users(name, email, email_verified_at,
+            $qy = "INSERT INTO users(img_profile, name, email, email_verified_at,
             password, account_type, remember_token,
             created_at, updated_at) 
-            VALUES(:name, :email, :verified, :pass,
+            VALUES(:pfp, :name, :email, :verified, :pass,
             :role, :remember, :created, :updated)";
             
+            $foundPicture = null;
+            if (isset($_FILES['profilePicture']['tmp_name']) && is_uploaded_file($_FILES['profilePicture']['tmp_name'])) {
+                $foundPicture = file_get_contents($_FILES['profilePicture']['tmp_name']);
+            }
+
             $hash_pass = password_hash($user->staffPass, PASSWORD_BCRYPT);
             $token = createRememberToken();
             $created_at = date('Y-m-d H:i:s');            
@@ -53,6 +58,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
             $stmt = $db_connection->prepare($qy);
             // TODO refer to the name attributes in create new staff account form fields
+            $stmt->bindParam(':pfp', $foundPicture);
             $stmt->bindParam(':name', $user->staffName);
             $stmt->bindParam(':email', $user->staffEmail);
             $stmt->bindParam(':verified', $created_at); // TODO verification feature (one time email?)
@@ -71,53 +77,63 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             echo json_encode($response);
             break;
 
-            case 'PATCH':
-                $user = json_decode(file_get_contents('php://input'));
-                $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-                $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+        case 'PATCH':
+            $user = json_decode(file_get_contents('php://input'));
+            $URI_array = explode('/', $_SERVER['REQUEST_URI']);
+            $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
             
-                if (!$found_id || !is_numeric($found_id)) {
-                    echo json_encode(['status' => 0, 'message' => 'Invalid or missing ID']);
-                    exit;
+            if (!$found_id || !is_numeric($found_id)) {
+                echo json_encode(['status' => 0, 'message' => 'Invalid or missing ID']);
+                exit;
+            }
+            
+            $query = "UPDATE users SET ";
+            $params = [];
+
+            if (isset($user->profilePicture)) {
+                $foundPicture = null;
+                if (isset($_FILES['profilePicture']['tmp_name']) && is_uploaded_file($_FILES['profilePicture']['tmp_name'])) {
+                    $foundPicture = file_get_contents($_FILES['profilePicture']['tmp_name']);
                 }
+
+                $query .= "img_profile=:img_profile, ";
+                $params[':img_profile'] = $foundPicture;
+            }
+            if (isset($user->staffName)) {
+                $query .= "name=:name, ";
+                $params[':name'] = $user->staffName;
+            }
+            if (isset($user->staffEmail)) {
+                $query .= "email=:email, ";
+                $params[':email'] = $user->staffEmail;
+            }
+            if (isset($user->staffRole)) {
+                $query .= "account_type=:role, ";
+                $params[':role'] = $user->staffRole;
+            }
+            if (isset($user->staffPass)) {
+                $query .= "password=:pass, ";
+                $params[':pass'] = password_hash($user->staffPass, PASSWORD_BCRYPT);
+            }
             
-                $query = "UPDATE users SET ";
-                $params = [];
+            $query .= "updated_at=:updated WHERE id=:id";
+            $params[':updated'] = date('Y-m-d H:i:s');
+            $params[':id'] = $found_id;
             
-                if (isset($user->staffName)) {
-                    $query .= "name=:name, ";
-                    $params[':name'] = $user->staffName;
-                }
-                if (isset($user->staffEmail)) {
-                    $query .= "email=:email, ";
-                    $params[':email'] = $user->staffEmail;
-                }
-                if (isset($user->staffRole)) {
-                    $query .= "account_type=:role, ";
-                    $params[':role'] = $user->staffRole;
-                }
-                if (isset($user->staffPass)) {
-                    $query .= "password=:pass, ";
-                    $params[':pass'] = password_hash($user->staffPass, PASSWORD_BCRYPT);
-                }
+            $stmt = $db_connection->prepare($query);
             
-                $query .= "updated_at=:updated WHERE id=:id";
-                $params[':updated'] = date('Y-m-d H:i:s');
-                $params[':id'] = $found_id;
+            if ($stmt->execute($params)) {
+                $stmt = $db_connection->prepare("SELECT * FROM users WHERE id=:id");
+                $stmt->bindParam(':id', $found_id);
+                $stmt->execute();
+                $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
             
-                $stmt = $db_connection->prepare($query);
-            
-                if ($stmt->execute($params)) {
-                    $stmt = $db_connection->prepare("SELECT * FROM users WHERE id=:id");
-                    $stmt->bindParam(':id', $found_id);
-                    $stmt->execute();
-                    $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-                    echo json_encode(['status' => 1, 'message' => 'User updated', 'data' => $updatedUser]);
-                } else {
-                    echo json_encode(['status' => 0, 'message' => 'Update failed']);
-                }
-                break;
+                echo json_encode(['status' => 1, 'message' => 'User updated', 'data' => $updatedUser]);
+            } else {
+                echo json_encode(['status' => 0, 'message' => 'Update failed']);
+            }
+
+            break;
             
             
     }
