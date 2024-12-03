@@ -46,11 +46,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             VALUES(:pfp, :name, :email, :verified, :pass,
             :role, :remember, :created, :updated)";
             
-            $foundPicture = null;
-            if (isset($_FILES['profilePicture']['tmp_name']) && is_uploaded_file($_FILES['profilePicture']['tmp_name'])) {
-                $foundPicture = file_get_contents($_FILES['profilePicture']['tmp_name']);
-            }
-
+            $foundPicture = base64_decode($user->profilePicture);
             $hash_pass = password_hash($user->staffPass, PASSWORD_BCRYPT);
             $token = createRememberToken();
             $created_at = date('Y-m-d H:i:s');            
@@ -58,7 +54,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
             $stmt = $db_connection->prepare($qy);
             // TODO refer to the name attributes in create new staff account form fields
-            $stmt->bindParam(':pfp', $foundPicture);
+            $stmt->bindParam(':pfp', $foundPicture, PDO::PARAM_LOB);
             $stmt->bindParam(':name', $user->staffName);
             $stmt->bindParam(':email', $user->staffEmail);
             $stmt->bindParam(':verified', $created_at); // TODO verification feature (one time email?)
@@ -91,11 +87,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $params = [];
 
             if (isset($user->profilePicture)) {
-                $foundPicture = null;
-                if (isset($_FILES['profilePicture']['tmp_name']) && is_uploaded_file($_FILES['profilePicture']['tmp_name'])) {
-                    $foundPicture = file_get_contents($_FILES['profilePicture']['tmp_name']);
-                }
-
+                $foundPicture = base64_decode($user->profilePicture);
                 $query .= "img_profile=:img_profile, ";
                 $params[':img_profile'] = $foundPicture;
             }

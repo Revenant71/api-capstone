@@ -13,6 +13,13 @@ switch ($method) {
     case 'GET':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_id_client = $URI_array[3];
+        
+        // get reference number in URI
+        $found_reference_no = null;
+
+        if (preg_match('/REF-\d+-\d+/', $_SERVER['REQUEST_URI'], $matches)) {
+        $found_reference_no = $matches[0]; // Assign the first match to $found_reference_no
+        }
 
         // TODO Where id_owner == sessionStorage.getItem("id_user")
         $qy = "
