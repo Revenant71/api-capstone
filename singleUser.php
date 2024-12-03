@@ -14,7 +14,7 @@ $db_attempt = new connectDb;
 $db_connection = $db_attempt->connect(); 
 
 $method = $_SERVER['REQUEST_METHOD'];
-switch ($variable) {
+switch ($method) {
     case 'GET':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_id = $URI_array[3];

@@ -9,7 +9,6 @@ $db_attempt = new connectDb;
 $db_connection = $db_attempt->connect();
 
 $method = $_SERVER['REQUEST_METHOD'];
-
 switch ($method) {
     case 'GET':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
@@ -109,7 +108,13 @@ switch ($method) {
             ':desc_req' => $transaction['desc_req'],
         ]));
 
-        echo json_encode(["message" => "Transaction created successfully"]);
+        if ($stmt->execute()) {
+            $response = ['status'=>1, 'message'=>'POST transaction successful.'];
+        } else {
+            $response = ['status'=>0, 'message'=>'SORRY, POST transaction failed.'];
+        }
+        
+        echo json_encode($response);
         break;
 
     case 'PATCH':
