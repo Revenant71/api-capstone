@@ -63,7 +63,6 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $updated_at = date('Y-m-d H:i:s');
 
             $stmt = $db_connection->prepare($qy);
-            // TODO refer to the name attributes in create new staff account form fields
             $stmt->bindParam(':pfp', $foundPicture, PDO::PARAM_LOB);
             $stmt->bindParam(':name', $user->staffName);
             $stmt->bindParam(':email', $user->staffEmail);
@@ -137,6 +136,43 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
             break;
             
+        case 'DELETE':
+            $URI_array = explode('/', $_SERVER['REQUEST_URI']);
+            $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+                
+            /*
+            delete pfp
+            axios delete http://localhost:80/api_arts/users.php/5?action=removeProfilePicture
+
+            delete user
+            axios delete http://localhost:80/api_arts/users.php/5
+            */
+
+                // Check if the DELETE request is for the profile picture
+                if (isset($_GET['action']) && $_GET['action'] === 'removeProfilePicture') {
+                    $query = "UPDATE users SET img_profile=NULL WHERE id=:id";
             
+                    $stmt = $db_connection->prepare($query);
+                    $stmt->bindParam(':id', $found_id);
+            
+                    if ($stmt->execute()) {
+                        echo json_encode(['status' => 1, 'message' => 'Profile picture deleted successfully.']);
+                    } else {
+                        echo json_encode(['status' => 0, 'message' => 'Failed to delete profile picture.']);
+                    }
+                } else {
+                    // Default DELETE case to delete a client or user
+                    $query = "DELETE FROM users WHERE id=:id";
+            
+                    $stmt = $db_connection->prepare($query);
+                    $stmt->bindParam(':id', $found_id);
+            
+                    if ($stmt->execute()) {
+                        echo json_encode(['status' => 1, 'message' => 'Record deleted successfully.']);
+                    } else {
+                        echo json_encode(['status' => 0, 'message' => 'Failed to delete record.']);
+                    }
+                }
+                break;    
     }
 ?>

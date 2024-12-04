@@ -27,10 +27,20 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 $stmt->bindParam(':id', $found_id);
                 $stmt->execute();
                 $data = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+                if ($data && isset($data['img_profile'])) {
+                    $data['img_profile'] = base64_encode($data['img_profile']);
+                }                
             } else {
                 $stmt = $db_connection->prepare($qy);
                 $stmt->execute();
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                foreach ($data as &$row) {
+                    if (isset($row['img_profile'])) {
+                        $row['img_profile'] = base64_encode($row['img_profile']);
+                    }
+                }
             }
         
             echo json_encode($data);
@@ -40,19 +50,21 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
         case 'POST':
             $client = json_decode(file_get_contents('php://input'));
             
-            $qy = "INSERT INTO clients(name, email, 
+            $qy = "INSERT INTO clients(img_profile, name, email, 
             password, remember_token,
             created_at, updated_at) 
-            VALUES(:name, :email, :pass,
+            VALUES(:pfp, :name, :email, :pass,
             :remember, :created, :updated)";
             
+            $foundPicture = base64_decode($user->profilePicture);
             $hash_pass = password_hash($client->clientPass, PASSWORD_BCRYPT);
             $token = createRememberToken();
             $created_at = date('Y-m-d H:i:s');            
             $updated_at = date('Y-m-d H:i:s');
 
             $stmt = $db_connection->prepare($qy);
-            // TODO refer to the name attributes in create new client account form fields
+            
+            $stmt->bindParam(':pfp', $foundPicture, PDO::PARAM_LOB);
             $stmt->bindParam(':name', $client->clientName);
             $stmt->bindParam(':email', $client->clientEmail);
             $stmt->bindParam(':pass', $hash_pass); 
@@ -75,20 +87,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
             
-            // TODO form field "file_pfp" file upload into column "img_profile"
-            // Handle base64 file decoding
-            if (!empty($client->file_pfp)) {
-                $base64String = $client->file_pfp;
-                // TODO folder for file uploads, separate folders for clients and users
-                $uploadDir = 'uploads/clients'; // Ensure this directory exists and is writable
-                $fileName = uniqid() . '.png'; // Customize file extension as needed
-                $filePath = $uploadDir . $fileName;
-
-                $fileData = explode(',', $base64String)[1]; // Remove the base64 prefix
-                file_put_contents($filePath, base64_decode($fileData));
-            }
-
-            $qy = "UPDATE clients SET img_profile=:=file_pfp, name=:name, email=:email,
+            $qy = "UPDATE clients SET img_profile=:img_profile, name=:name, email=:email,
             password=:pass, remember_token=:remember, updated_at=:updated WHERE id=:id";
 
             $hash_pass = password_hash($client->clientPass, PASSWORD_BCRYPT);
@@ -100,7 +99,13 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             }
 
             $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':img_profile', $filePath);
+            
+            if (isset($user->profilePicture)) {
+                $foundPicture = base64_decode($client->profilePicture);
+                $stmt->bindParam(':img_profile', $foundPicture);
+            }
+            
+            
             $stmt->bindParam(':name', $client->name);
             $stmt->bindParam(':email', $client->email);
             $stmt->bindParam(':pass', $hash_pass);
@@ -116,22 +121,44 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             echo json_encode($response);
             break;
         
-        case 'DELETE':
-            $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-            $found_id = $URI_array[3];
+            case 'DELETE':
+                $URI_array = explode('/', $_SERVER['REQUEST_URI']);
+                $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+                
+                /*
+                delete pfp
+                axios delete http://localhost:80/api_arts/clients.php/5?action=removeProfilePicture
 
-            $qy = "DELETE FROM clients WHERE id=:id";
+                delete client
+                axios delete http://localhost:80/api_arts/clients.php/5
+                */
 
-            $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':id', $found_id);
-
-            if($stmt->execute()){
-                $response = ['status'=>1, 'message'=>'DELETE client successful.'];    
-            } else {
-                $response = ['status'=>0, 'message'=>'Oops! DELETE client failed.'];
-            }
-
-            echo json_encode($response);
-            break;
+                // Check if the DELETE request is for the profile picture
+                if (isset($_GET['action']) && $_GET['action'] === 'removeProfilePicture') {
+                    $query = "UPDATE clients SET img_profile=NULL WHERE id=:id";
+            
+                    $stmt = $db_connection->prepare($query);
+                    $stmt->bindParam(':id', $found_id);
+            
+                    if ($stmt->execute()) {
+                        echo json_encode(['status' => 1, 'message' => 'Profile picture deleted successfully.']);
+                    } else {
+                        echo json_encode(['status' => 0, 'message' => 'Failed to delete profile picture.']);
+                    }
+                } else {
+                    // Default DELETE case to delete a client or user
+                    $query = "DELETE FROM clients WHERE id=:id";
+            
+                    $stmt = $db_connection->prepare($query);
+                    $stmt->bindParam(':id', $found_id);
+            
+                    if ($stmt->execute()) {
+                        echo json_encode(['status' => 1, 'message' => 'Record deleted successfully.']);
+                    } else {
+                        echo json_encode(['status' => 0, 'message' => 'Failed to delete record.']);
+                    }
+                }
+                break;
+            
     }
 ?>
