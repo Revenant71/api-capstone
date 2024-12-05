@@ -86,17 +86,18 @@ switch ($method) {
 
         $stmt = $db_connection->prepare($qy);
 
-        $foundReceipt = base64_decode($transaction['receipt']);
         $default_values = [
             ':id_doc' => null,
             ':id_employee' => null,
-            ':filepath_receipt' => null,
+            
             ':overdue_days' => 0,
             ':statusPayment' => 'Not Paid',
             ':statusTransit' => 'Request Placed',
             ':created_at' => date('Y-m-d H:i:s'),
             ':updated_at' => date('Y-m-d H:i:s'),
         ];
+
+        $foundReceipt = base64_decode($transaction['receipt']);
 
         $stmt->execute(array_merge($default_values, [
             ':reference_number' => $transaction['reference_number'],
@@ -111,6 +112,7 @@ switch ($method) {
             ':catg_req' => $transaction['catg_req'],
             ':purpose_req' => $transaction['purpose_req'],
             ':desc_req' => $transaction['desc_req'],
+            ':filepath_receipt' => $foundReceipt,
         ]));
 
         if ($stmt->execute()) {
