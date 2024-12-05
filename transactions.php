@@ -14,6 +14,7 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
 
+        // TODO get image
         if (isset($found_reference_no) && is_numeric($found_reference_no)) {
             $qy = "
             SELECT 
@@ -65,7 +66,7 @@ switch ($method) {
 
         echo json_encode($data);
         break;
-
+        
     case 'POST':
         $transaction = json_decode(file_get_contents('php://input'), true);
 
@@ -96,7 +97,7 @@ switch ($method) {
             ':updated_at' => date('Y-m-d H:i:s'),
         ];
 
-        $foundReceipt = base64_decode($transaction['receipt']);
+        $foundReceipt = $transaction['receipt'];
 
         $stmt->execute(array_merge($default_values, [
             ':reference_number' => $transaction['reference_number'],
@@ -140,7 +141,6 @@ switch ($method) {
             purpose_req = :purpose_req, 
             desc_req = :desc_req, 
             filepath_receipt = :filepath_receipt,
-
             statusPayment = :statusPayment, 
             statusTransit = :statusTransit, 
             id_employee = :id_employee, 
@@ -150,7 +150,7 @@ switch ($method) {
 
         $stmt = $db_connection->prepare($qy);
 
-        $foundReceipt = base64_decode($transaction['receipt']);
+        $foundReceipt = $transaction['receipt'];
 
         // refer to users for patch
         $stmt->execute([
@@ -185,9 +185,9 @@ switch ($method) {
         $stmt->bindParam(':reference', $found_reference_no);
 
         if ($stmt->execute()) {
-            echo json_encode(['message' => 'DELETE successful']);
+            echo json_encode(['status'=>1, 'message' => 'DELETE transaction successful']);
         } else {
-            echo json_encode(['message' => 'DELETE failed']);
+            echo json_encode(['status'=>0, 'message' => 'DELETE transaction failed']);
         }
         break;
 }

@@ -79,6 +79,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':pfp', $foundPicture, PDO::PARAM_LOB);
             $stmt->bindParam(':name', $client->clientName);
             $stmt->bindParam(':email', $client->clientEmail);
+            $stmt->bindParam(':phone', $client->clientPhone);
             $stmt->bindParam(':pass', $hash_pass); 
             $stmt->bindParam(':remember', $token);
             $stmt->bindParam(':created', $created_at); 
@@ -139,6 +140,10 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             if (isset($client->clientEmail)) {
                 $query .= "email=:email, ";
                 $params[':email'] = $client->clientEmail;
+            }
+            if (isset($client->clientPhone)) {
+                $query .= "phone=:phone, ";
+                $params[':phone'] = $client->clientPhone;
             }
             if (isset($client->clientPass)) {
                 $query .= "password=:pass, ";

@@ -55,9 +55,9 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $user = json_decode(file_get_contents('php://input'));
             
             $qy = "INSERT INTO users(img_profile, name, email, email_verified_at,
-            password, account_type, remember_token,
+            phone, password, account_type, remember_token,
             created_at, updated_at) 
-            VALUES(:pfp, :name, :email, :verified, :pass,
+            VALUES(:pfp, :name, :email, :verified, :phone, :pass,
             :role, :remember, :created, :updated)";
             
             if (isset($user->profilePicture)) {
@@ -81,6 +81,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':name', $user->staffName);
             $stmt->bindParam(':email', $user->staffEmail);
             $stmt->bindParam(':verified', $created_at); // TODO verification feature (one time email?)
+            $stmt->bindParam(':phone', $user->staffPhone);
             $stmt->bindParam(':pass', $hash_pass); 
             $stmt->bindParam(':role', $user->staffRole);
             $stmt->bindParam(':remember', $token);
@@ -96,6 +97,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                         'pfp' => $foundPicture,
                         'name' => $user->staffName,
                         'email' => $user->staffEmail,
+                        'phone' => $user->staffPhone,
                         'role' => $user->staffRole,
                         'createdAt' => $created_at,
                         'updatedAt' => $updated_at,
@@ -139,6 +141,10 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             if (isset($user->staffEmail)) {
                 $query .= "email=:email, ";
                 $params[':email'] = $user->staffEmail;
+            }
+            if (isset($user->staffPhone)) {
+                $query .= "phone=:phone, ";
+                $params[':phone'] = $user->staffPhone;
             }
             if (isset($user->staffRole)) {
                 $query .= "account_type=:role, ";
