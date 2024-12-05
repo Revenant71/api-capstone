@@ -89,7 +89,6 @@ switch ($method) {
         $default_values = [
             ':id_doc' => null,
             ':id_employee' => null,
-            
             ':overdue_days' => 0,
             ':statusPayment' => 'Not Paid',
             ':statusTransit' => 'Request Placed',
