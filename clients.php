@@ -17,7 +17,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
     switch ($method) {
         case 'GET':
             $URI_array = explode('/', string: $_SERVER['REQUEST_URI']);
-            $found_id = $URI_array[3];
+            $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
 
             $qy = "SELECT * FROM clients";
 
@@ -73,9 +73,20 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':updated', $updated_at);
 
             if ($stmt->execute()) {
-                $response = ['status'=>1, 'message'=>'POST client successful.'];
+                $response = [
+                    'status' => 1,
+                    'message' => 'Client created successfully',
+                    'newUser' => [
+                        'id' => $db_connection->lastInsertId(),
+                        'pfp' => $foundPicture, 
+                        'name' => $client->clientName,
+                        'email' => $client->clientEmail,
+                        'createdAt' => $created_at,
+                        'updatedAt' => $updated_at,
+                    ]
+                ];
             } else {
-                $response = ['status'=>0, 'message'=>'SORRY, POST client failed.'];
+                $response = ['status'=>0, 'message'=>'SORRY, Failed to create client!'];
             }
             
             echo json_encode($response);
@@ -83,82 +94,83 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
         case 'PATCH':
             $client = json_decode(file_get_contents('php://input'));
-
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
             
-            $qy = "UPDATE clients SET img_profile=:img_profile, name=:name, email=:email,
-            password=:pass, remember_token=:remember, updated_at=:updated WHERE id=:id";
-
             $hash_pass = password_hash($client->clientPass, PASSWORD_BCRYPT);
             $token = createRememberToken();
             $updated_at = date('Y-m-d H:i:s');
 
-            if ($found_id && is_numeric($found_id)) {
-                $stmt->bindParam(':id', $found_id);
-            }
+            if (!$found_id && is_numeric(!$found_id)) {
+                echo json_encode(['status' => 0, 'message' => 'Invalid or missing ID']);
+                exit;
+            } 
 
-            $stmt = $db_connection->prepare($qy);
+            $query = "UPDATE clients SET ";
+            $params = [];
             
-            if (isset($user->profilePicture)) {
+            if (isset($client->profilePicture)) {
                 $foundPicture = base64_decode($client->profilePicture);
-                $stmt->bindParam(':img_profile', $foundPicture);
+                $query .= "img_profile=:img_profile, ";
+                $params[':img_profile'] = $foundPicture;
             }
-            
-            
-            $stmt->bindParam(':name', $client->name);
-            $stmt->bindParam(':email', $client->email);
-            $stmt->bindParam(':pass', $hash_pass);
-            $stmt->bindParam(':remember', $token);
-            $stmt->bindParam(':updated', $updated_at);
-            
-            if ($stmt->execute()) {
-                $response = ['status'=>1, 'message'=>'PATCH client successful.'];
-            } else {
-                $response = ['status'=>0, 'message'=>'SORRY, PATCH client failed.'];
+            if (isset($client->clientName)) {
+                $query .= "name=:name, ";
+                $params[':name'] = $client->clientName;
+            }
+            if (isset($client->clientEmail)) {
+                $query .= "email=:email, ";
+                $params[':email'] = $client->clientEmail;
+            }
+            if (isset($user->clientPass)) {
+                $query .= "password=:pass, ";
+                $params[':pass'] = $hash_pass;
             }
 
-            echo json_encode($response);
+            $query .= "updated_at=:updated WHERE id=:id";
+            $params[':updated'] = date('Y-m-d H:i:s');
+            $params[':id'] = $found_id;
+
+            $stmt = $db_connection->prepare($query);
+            
+            if ($stmt->execute($params)) {
+                $stmt = $db_connection->prepare("SELECT * FROM clients   WHERE id=:id");
+                $stmt->bindParam(':id', $found_id);
+                $stmt->execute();
+                $updatedClient = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+                echo json_encode(['status' => 1, 'message' => 'Client updated', 'data' => $updatedClient]);
+            } else {
+                echo json_encode(['status' => 0, 'message' => 'Update failed']);
+            }
+
             break;
         
             case 'DELETE':
-                $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-                $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+                $found_id = isset($_GET['id']) ? $_GET['id'] : null;
                 
-                /*
-                delete pfp
-                axios delete http://localhost:80/api_arts/clients.php/5?action=removeProfilePicture
-
-                delete client
-                axios delete http://localhost:80/api_arts/clients.php/5
-                */
-
-                // Check if the DELETE request is for the profile picture
-                if (isset($_GET['action']) && $_GET['action'] === 'removeProfilePicture') {
-                    $query = "UPDATE clients SET img_profile=NULL WHERE id=:id";
-            
-                    $stmt = $db_connection->prepare($query);
-                    $stmt->bindParam(':id', $found_id);
-            
-                    if ($stmt->execute()) {
-                        echo json_encode(['status' => 1, 'message' => 'Profile picture deleted successfully.']);
-                    } else {
-                        echo json_encode(['status' => 0, 'message' => 'Failed to delete profile picture.']);
-                    }
-                } else {
-                    // Default DELETE case to delete a client or user
-                    $query = "DELETE FROM clients WHERE id=:id";
-            
-                    $stmt = $db_connection->prepare($query);
-                    $stmt->bindParam(':id', $found_id);
-            
-                    if ($stmt->execute()) {
-                        echo json_encode(['status' => 1, 'message' => 'Record deleted successfully.']);
-                    } else {
-                        echo json_encode(['status' => 0, 'message' => 'Failed to delete record.']);
-                    }
+                if (!$found_id || !is_numeric($found_id)) {
+                    echo json_encode(['status' => 0, 'message' => 'Invalid or missing ID']);
+                    exit;
                 }
-                break;
+                
+                try {
+                    $qy = "DELETE FROM clients WHERE id=:id";
+                    $stmt = $db_connection->prepare($qy);
+                    $stmt->bindParam(':id', $found_id);
+            
+                    if ($stmt->execute()) {
+                        echo json_encode(['status' => 1, 'message' => 'Client deleted successfully']);
+                    } else {
+                        error_log("Delete client error: " . json_encode($stmt->errorInfo())); // Log detailed error info
+                        echo json_encode(['status' => 0, 'message' => 'Failed to delete client']);
+                    }
+                } catch (Exception $e) {
+                    error_log("Exception during delete client: " . $e->getMessage());
+                    echo json_encode(['status' => 0, 'message' => 'Internal server error during delete']);
+                }
+
+                exit;
             
     }
 ?>

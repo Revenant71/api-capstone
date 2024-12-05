@@ -74,9 +74,21 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':updated', $updated_at);
 
             if ($stmt->execute()) {
-                $response = ['status'=>1, 'message'=>'POST user successful.'];
+                $response = [
+                    'status' => 1,
+                    'message' => 'User created successfully',
+                    'newUser' => [
+                        'id' => $db_connection->lastInsertId(),
+                        'pfp' => $foundPicture,
+                        'name' => $user->staffName,
+                        'email' => $user->staffEmail,
+                        'role' => $user->staffRole,
+                        'createdAt' => $created_at,
+                        'updatedAt' => $updated_at,
+                    ]
+                ];
             } else {
-                $response = ['status'=>0, 'message'=>'SORRY, POST user failed.'];
+                $response = ['status'=>0, 'message'=>'SORRY, Failed to create user!'];
             }
             
             echo json_encode($response);
@@ -137,42 +149,29 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             break;
             
         case 'DELETE':
-            $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-            $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+            $found_id = isset($_GET['id']) ? $_GET['id'] : null;
                 
-            /*
-            delete pfp
-            axios delete http://localhost:80/api_arts/users.php/5?action=removeProfilePicture
+            if (!$found_id || !is_numeric($found_id)) {
+                echo json_encode(['status' => 0, 'message' => 'Invalid or missing ID']);
+                exit;
+            }
 
-            delete user
-            axios delete http://localhost:80/api_arts/users.php/5
-            */
-
-                // Check if the DELETE request is for the profile picture
-                if (isset($_GET['action']) && $_GET['action'] === 'removeProfilePicture') {
-                    $query = "UPDATE users SET img_profile=NULL WHERE id=:id";
-            
-                    $stmt = $db_connection->prepare($query);
-                    $stmt->bindParam(':id', $found_id);
-            
-                    if ($stmt->execute()) {
-                        echo json_encode(['status' => 1, 'message' => 'Profile picture deleted successfully.']);
-                    } else {
-                        echo json_encode(['status' => 0, 'message' => 'Failed to delete profile picture.']);
-                    }
+            try {
+                $qy = "DELETE FROM users WHERE id=:id";
+                $stmt = $db_connection->prepare($qy);
+                $stmt->bindParam(':id', $found_id);
+        
+                if ($stmt->execute()) {
+                    echo json_encode(['status' => 1, 'message' => 'User deleted successfully']);
                 } else {
-                    // Default DELETE case to delete a client or user
-                    $query = "DELETE FROM users WHERE id=:id";
-            
-                    $stmt = $db_connection->prepare($query);
-                    $stmt->bindParam(':id', $found_id);
-            
-                    if ($stmt->execute()) {
-                        echo json_encode(['status' => 1, 'message' => 'Record deleted successfully.']);
-                    } else {
-                        echo json_encode(['status' => 0, 'message' => 'Failed to delete record.']);
-                    }
+                    error_log("Delete user error: " . json_encode($stmt->errorInfo())); // Log detailed error info
+                    echo json_encode(['status' => 0, 'message' => 'Failed to delete user']);
                 }
-                break;    
+            } catch (Exception $e) {
+                error_log("Exception during delete user: " . $e->getMessage());
+                echo json_encode(['status' => 0, 'message' => 'Internal server error during delete']);
+            }
+
+            exit;   
     }
 ?>
