@@ -29,7 +29,9 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 $data = $stmt->fetch(PDO::FETCH_ASSOC);
             
                 if ($data && isset($data['img_profile'])) {
-                    $data['img_profile'] = base64_encode($data['img_profile']);
+                    $finfo = new finfo(FILEINFO_MIME_TYPE);
+                    $mimeType = $finfo->buffer($data['img_profile']);
+                    $data['img_profile'] = "data:$mimeType;base64," . base64_encode($data['img_profile']);
                 }                
             } else {
                 $stmt = $db_connection->prepare($qy);
@@ -38,7 +40,9 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
                 foreach ($data as &$row) {
                     if (isset($row['img_profile'])) {
-                        $row['img_profile'] = base64_encode($row['img_profile']);
+                        $finfo = new finfo(FILEINFO_MIME_TYPE);
+                        $mimeType = $finfo->buffer($data['img_profile']);
+                        $row['img_profile'] = "data:$mimeType;base64," . base64_encode($row['img_profile']);
                     }
                 }
             }
@@ -46,7 +50,6 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             echo json_encode($data);
             break;
         
-        // For Registrar to create new staff accounts
         case 'POST':
             $client = json_decode(file_get_contents('php://input'));
             
@@ -56,14 +59,23 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             VALUES(:pfp, :name, :email, :pass,
             :remember, :created, :updated)";
             
-            $foundPicture = base64_decode($user->profilePicture);
+            if (isset($client->profilePicture)) {
+                // Extract the Base64 part and validate MIME type
+                if (preg_match('/^data:(image\/\w+);base64,/', $client->profilePicture, $type)) {
+                    $mimeType = $type[1]; // e.g., image/png
+                    $foundPicture = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $client->profilePicture));
+                } else {
+                    echo json_encode(['status' => 0, 'message' => 'Invalid image format']);
+                    exit;
+                }
+            }
+            
             $hash_pass = password_hash($client->clientPass, PASSWORD_BCRYPT);
             $token = createRememberToken();
             $created_at = date('Y-m-d H:i:s');            
             $updated_at = date('Y-m-d H:i:s');
 
             $stmt = $db_connection->prepare($qy);
-            
             $stmt->bindParam(':pfp', $foundPicture, PDO::PARAM_LOB);
             $stmt->bindParam(':name', $client->clientName);
             $stmt->bindParam(':email', $client->clientEmail);
@@ -110,9 +122,15 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $params = [];
             
             if (isset($client->profilePicture)) {
-                $foundPicture = base64_decode($client->profilePicture);
-                $query .= "img_profile=:img_profile, ";
-                $params[':img_profile'] = $foundPicture;
+                if (preg_match('/^data:(image\/\w+);base64,/', $client->profilePicture, $type)) {
+                    $mimeType = $type[1];
+                    $foundPicture = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $client->profilePicture));
+                    $query .= "img_profile=:img_profile, ";
+                    $params[':img_profile'] = $foundPicture;
+                } else {
+                    echo json_encode(['status' => 0, 'message' => 'Invalid image format']);
+                    exit;
+                }
             }
             if (isset($client->clientName)) {
                 $query .= "name=:name, ";
@@ -122,7 +140,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 $query .= "email=:email, ";
                 $params[':email'] = $client->clientEmail;
             }
-            if (isset($user->clientPass)) {
+            if (isset($client->clientPass)) {
                 $query .= "password=:pass, ";
                 $params[':pass'] = $hash_pass;
             }

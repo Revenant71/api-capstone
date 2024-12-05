@@ -27,9 +27,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 $stmt->bindParam(':id', $found_id);
                 $stmt->execute();
                 $data = $stmt->fetch(PDO::FETCH_ASSOC);
-
+                
                 if ($data && isset($data['img_profile'])) {
-                    $data['img_profile'] = base64_encode($data['img_profile']);
+                    $finfo = new finfo(FILEINFO_MIME_TYPE);
+                    $mimeType = $finfo->buffer($data['img_profile']);
+                    $data['img_profile'] = "data:$mimeType;base64," . base64_encode($data['img_profile']);
                 }
             } else {
                 $stmt = $db_connection->prepare($qy);
@@ -38,7 +40,9 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
                 foreach ($data as &$row) {
                     if (isset($row['img_profile'])) {
-                        $row['img_profile'] = base64_encode($row['img_profile']);
+                        $finfo = new finfo(FILEINFO_MIME_TYPE);
+                        $mimeType = $finfo->buffer($row['img_profile']);
+                        $row['img_profile'] = "data:$mimeType;base64," . base64_encode($row['img_profile']);
                     }
                 }
             }
@@ -56,7 +60,17 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             VALUES(:pfp, :name, :email, :verified, :pass,
             :role, :remember, :created, :updated)";
             
-            $foundPicture = base64_decode($user->profilePicture);
+            if (isset($user->profilePicture)) {
+                // Extract the Base64 part and validate MIME type
+                if (preg_match('/^data:(image\/\w+);base64,/', $user->profilePicture, $type)) {
+                    $mimeType = $type[1]; // e.g., image/png
+                    $foundPicture = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $user->profilePicture));
+                } else {
+                    echo json_encode(['status' => 0, 'message' => 'Invalid image format']);
+                    exit;
+                }
+            }
+
             $hash_pass = password_hash($user->staffPass, PASSWORD_BCRYPT);
             $token = createRememberToken();
             $created_at = date('Y-m-d H:i:s');            
@@ -108,9 +122,15 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $params = [];
 
             if (isset($user->profilePicture)) {
-                $foundPicture = base64_decode($user->profilePicture);
-                $query .= "img_profile=:img_profile, ";
-                $params[':img_profile'] = $foundPicture;
+                if (preg_match('/^data:(image\/\w+);base64,/', $user->profilePicture, $type)) {
+                    $mimeType = $type[1];
+                    $foundPicture = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $user->profilePicture));
+                    $query .= "img_profile=:img_profile, ";
+                    $params[':img_profile'] = $foundPicture;
+                } else {
+                    echo json_encode(['status' => 0, 'message' => 'Invalid image format']);
+                    exit;
+                }
             }
             if (isset($user->staffName)) {
                 $query .= "name=:name, ";
