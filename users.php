@@ -53,12 +53,13 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
         // For Registrar to create new staff accounts
         case 'POST':
             $user = json_decode(file_get_contents('php://input'));
-            
+            // remember_token,
+            // :remember,
             $qy = "INSERT INTO users(img_profile, name, email, email_verified_at,
-            phone, password, account_type, remember_token,
+            phone, password, account_type, 
             created_at, updated_at) 
             VALUES(:pfp, :name, :email, :verified, :phone, :pass,
-            :role, :remember, :created, :updated)";
+            :role,  :created, :updated)";
             
             if (isset($user->profilePicture)) {
                 // Extract the Base64 part and validate MIME type
@@ -80,11 +81,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':pfp', $foundPicture, PDO::PARAM_LOB);
             $stmt->bindParam(':name', $user->staffName);
             $stmt->bindParam(':email', $user->staffEmail);
-            $stmt->bindParam(':verified', $created_at); // TODO verification feature (one time email?)
+            $stmt->bindParam(':verified', $user->verified); // TODO verification feature (one time email?)
             $stmt->bindParam(':phone', $user->staffPhone);
             $stmt->bindParam(':pass', $hash_pass); 
             $stmt->bindParam(':role', $user->staffRole);
-            $stmt->bindParam(':remember', $token);
+            //$stmt->bindParam(':remember', $token);
             $stmt->bindParam(':created', $created_at); 
             $stmt->bindParam(':updated', $updated_at);
 
@@ -150,10 +151,10 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 $query .= "account_type=:role, ";
                 $params[':role'] = $user->staffRole;
             }
-            if (isset($user->staffPass)) {
-                $query .= "password=:pass, ";
-                $params[':pass'] = password_hash($user->staffPass, PASSWORD_BCRYPT);
-            }
+            // if (isset($user->staffPass)) {
+            //     $query .= "password=:pass, ";
+            //     $params[':pass'] = password_hash($user->staffPass, PASSWORD_BCRYPT);
+            // }
             
             $query .= "updated_at=:updated WHERE id=:id";
             $params[':updated'] = date('Y-m-d H:i:s');

@@ -52,12 +52,13 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
         
         case 'POST':
             $client = json_decode(file_get_contents('php://input'));
-            
+            // remember_token,
+            // :remember,
             $qy = "INSERT INTO clients(img_profile, name, email, 
-            password, remember_token,
+            password, 
             created_at, updated_at) 
             VALUES(:pfp, :name, :email, :pass,
-            :remember, :created, :updated)";
+             :created, :updated)";
             
             if (isset($client->profilePicture)) {
                 // Extract the Base64 part and validate MIME type
@@ -81,7 +82,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':email', $client->clientEmail);
             $stmt->bindParam(':phone', $client->clientPhone);
             $stmt->bindParam(':pass', $hash_pass); 
-            $stmt->bindParam(':remember', $token);
+            //$stmt->bindParam(':remember', $token);
             $stmt->bindParam(':created', $created_at); 
             $stmt->bindParam(':updated', $updated_at);
 
@@ -110,7 +111,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
             
-            $hash_pass = password_hash($client->clientPass, PASSWORD_BCRYPT);
+            // $hash_pass = password_hash($client->clientPass, PASSWORD_BCRYPT);
             $token = createRememberToken();
             $updated_at = date('Y-m-d H:i:s');
 
@@ -145,10 +146,10 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 $query .= "phone=:phone, ";
                 $params[':phone'] = $client->clientPhone;
             }
-            if (isset($client->clientPass)) {
-                $query .= "password=:pass, ";
-                $params[':pass'] = $hash_pass;
-            }
+            // if (isset($client->clientPass)) {
+            //     $query .= "password=:pass, ";
+            //     $params[':pass'] = $hash_pass;
+            // }
 
             $query .= "updated_at=:updated WHERE id=:id";
             $params[':updated'] = date('Y-m-d H:i:s');
