@@ -85,9 +85,16 @@ class Client {
 // $userAdmin = new User();
 // $userAdmin->insertUser('Dr. Angelita Canene', 'apcanene.swu@phinmaed.com', 'canene123', 'ADMIN');
 
-// $client = new Client();
-// $client->insertClient("test123", "Bu Aang", "bung.aang.swu@phinmaed.com", "1234567890", "client123");
+// debug admin account
+/* $userAdmin = new User();
+$userAdmin->insertUser('dqstAdmin', 'dqst.swu@phinmaed.com', 'dqst123', 'ADMIN'); */
+
+$client = new Client();
+$client->insertClient("123", "Bu Aang", "bung.aang.swu@phinmaed.com", "1234567890", "client123");
 
 $client2 = new Client();
-$client2->insertClient("2", "Simon Says", "sisa.swu@phinmaed.com", "1234567890", "client456");
+$client2->insertClient("456", "Simon Says", "sisa.swu@phinmaed.com", "1234567890", "client456");
+
+// $client3 = new Client();
+// $client3->insertClient("999", "King Von", "kvon.swu@phinmaed.com", "1234567890", "kvon123");
 ?>
