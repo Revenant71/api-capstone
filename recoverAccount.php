@@ -3,12 +3,13 @@ require_once('connectDb.php');
 require 'vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
 use OTPHP\TOTP;
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: GET, POST");
-    
+
 $db_attempt = new connectDb;
 $db_connection = $db_attempt->connect(); 
 $css = file_get_contents('http://localhost/api_drts/cssEmailRecover.php'); // get css file
@@ -43,9 +44,19 @@ switch ($method) {
 
         if ($dataUser){
             try {
+                // config
                 $mailRecover = new PHPMailer(true);
-                $mailRecover->isMail();
-                $mailRecover->setFrom('docuquest@automail.com', 'DocuQuest');
+                $mailRecover->Host = 'smtp.gmail.com';
+                $mailRecover->isSMTP();
+                $mailRecover->SMTPAuth = true;
+                $mailRecover->Username = 'myself@gmail.com';
+                $mailRecover->Password = 'password';
+                $mailRecover->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
+                $mailRecover->Port = 587;
+
+                // from, to, body
+                $mailRecover->setFrom('myself@gmail.com', 'MeMyself');
+                $mailRecover->addReplyTo('myself@gmail.com', 'MeMyself');
                 $mailRecover->addAddress($dataUser['email']);
                 $mailRecover->Subject = 'DocuQuest Reset Password';
                 $mailRecover->isHTML(true);
@@ -68,7 +79,11 @@ switch ($method) {
                         </body>
                     </html>
                 ';
-                
+                $mailRecover->AltBody = '
+                    Your OTP is:'.htmlspecialchars($stringOTP, ENT_QUOTES, 'UTF-8').'
+                    DO NOT REPLY TO THIS EMAIL.
+                ';
+
                 $mailRecover->send();
 
                 // TODO verify otp only on backend
@@ -103,9 +118,19 @@ switch ($method) {
 
             if ($dataClient){
                 try {
+                    // config
                     $mailRecover = new PHPMailer(true);
-                    $mailRecover->isMail();
-                    $mailRecover->setFrom('docuquest@automail.com', 'DocuQuest');
+                    $mailRecover->Host = 'smtp.gmail.com';
+                    $mailRecover->isSMTP();
+                    $mailRecover->SMTPAuth = true;
+                    $mailRecover->Username = 'myself@gmail.com';
+                    $mailRecover->Password = 'password';
+                    $mailRecover->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
+                    $mailRecover->Port = 587;
+
+                    // from, to, body
+                    $mailRecover->setFrom('myself@gmail.com', 'MeMyself');
+                    $mailRecover->addReplyTo('myself@gmail.com', 'MeMyself');
                     $mailRecover->addAddress($dataClient['email']);
                     $mailRecover->Subject = 'DocuQuest Reset Password';
                     $mailRecover->isHTML(true);
@@ -128,7 +153,11 @@ switch ($method) {
                             </body>
                         </html>
                     ';
-                    
+                    $mailRecover->AltBody = '
+                    Your OTP is:'.htmlspecialchars($stringOTP, ENT_QUOTES, 'UTF-8').'
+                    DO NOT REPLY TO THIS EMAIL.
+                    ';
+
                     $mailRecover->send();
     
                     $response = [
