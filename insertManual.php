@@ -95,6 +95,9 @@ $client->insertClient("123", "Bu Aang", "bung.aang.swu@phinmaed.com", "123456789
 $client2 = new Client();
 $client2->insertClient("456", "Simon Says", "sisa.swu@phinmaed.com", "1234567890", "client456");
 
+$client3 = new Client();
+$client3->insertClient("999", "King Von", "kvon.swu@phinmaed.com", "1234567890", "kvon123");
+
 // $client3 = new Client();
-// $client3->insertClient("999", "King Von", "kvon.swu@phinmaed.com", "1234567890", "kvon123");
+// $client3->insertClient("71", "Hans Seno", "hansseno2020@gmail.com", "1234567890", "hans123");
 ?>
