@@ -1,5 +1,6 @@
 <?php
 require_once('connectDb.php');
+require 'configSmtp.php'; 
 require 'vendor/autoload.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -46,21 +47,20 @@ switch ($method) {
             try {
                 // config
                 $mailRecover = new PHPMailer(true);
-                $mailRecover->Host = 'smtp.gmail.com';
+                $mailRecover->Host = MAILHOST;
                 $mailRecover->isSMTP();
                 $mailRecover->SMTPAuth = true;
-                $mailRecover->Username = 'myself@gmail.com';
-                $mailRecover->Password = 'password';
+                $mailRecover->Username = USERNAME;
+                $mailRecover->Password = PASSWORD;
                 $mailRecover->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
                 $mailRecover->Port = 587;
 
                 // from, to, body
-                $mailRecover->setFrom('myself@gmail.com', 'MeMyself');
-                $mailRecover->addReplyTo('myself@gmail.com', 'MeMyself');
+                $mailRecover->setFrom(SEND_FROM, SEND_FROM_NAME);
                 $mailRecover->addAddress($dataUser['email']);
-                $mailRecover->Subject = 'DocuQuest Reset Password';
+                $mailRecover->addReplyTo(REPLY_TO, REPLY_TO_NAME);
                 $mailRecover->isHTML(true);
-                $mailRecover->ContentType = 'text/html';
+                $mailRecover->Subject = 'DocuQuest Reset Password';
                 $mailRecover->Body = '
                     <html>
                         <head>
@@ -71,9 +71,10 @@ switch ($method) {
                         <body> 
                             <strong>Your OTP is:</strong>
                             <br/>
-                            <h3>'.htmlspecialchars($stringOTP, ENT_QUOTES, 'UTF-8').'</h3>
-
+                            <h2>'.htmlspecialchars($stringOTP, ENT_QUOTES, 'UTF-8').'</h2>
+                            
                             <p>DO NOT use on any OTP code unless you are the one who sent it.</p>
+                            <p>This OTP code expires in 5 Minutes.</p>
                             <br/>
                             <i>Do not reply to this email.</i>
                         </body>
@@ -84,23 +85,24 @@ switch ($method) {
                     DO NOT REPLY TO THIS EMAIL.
                 ';
 
-                $mailRecover->send();
-
-                // TODO verify otp only on backend
-                $response = [
-                    'status'=>1,
-                    'message'=> 'Found a user account with the given email',
-                    'foundEmail'=> $dataUser['email'],
-                    'otpData'=>[
-                        'expiry' => $expiry,
-                        'otp' => $stringOTP
-                    ]
-                ];
+                if ($mailRecover->send())
+                {
+                    // TODO verify otp only on backend
+                    $response = [
+                        'status'=>1,
+                        'message'=> 'Found a user account with the given email',
+                        'foundEmail'=> $dataUser['email'],
+                        'otpData'=>[
+                            'expiry' => $expiry,
+                            'otp' => $stringOTP
+                        ]
+                    ];
+                }
             } catch (Exception $e) {
                 // Handle the error
                 $response = [
                     'status'=>0,
-                    'message'=> "Message could not be sent. Mailer Error: {$mailRecover->ErrorInfo}",
+                    'message'=> "Message could not be sent to user. Mailer Error: {$mailRecover->ErrorInfo}",
                 ];
             }
 
@@ -120,21 +122,21 @@ switch ($method) {
                 try {
                     // config
                     $mailRecover = new PHPMailer(true);
-                    $mailRecover->Host = 'smtp.gmail.com';
+                    $mailRecover->Host = MAILHOST;
                     $mailRecover->isSMTP();
                     $mailRecover->SMTPAuth = true;
-                    $mailRecover->Username = 'myself@gmail.com';
-                    $mailRecover->Password = 'password';
+                    $mailRecover->Username = USERNAME;
+                    $mailRecover->Password = PASSWORD;
                     $mailRecover->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
                     $mailRecover->Port = 587;
 
                     // from, to, body
-                    $mailRecover->setFrom('myself@gmail.com', 'MeMyself');
-                    $mailRecover->addReplyTo('myself@gmail.com', 'MeMyself');
+                    $mailRecover->setFrom(SEND_FROM, SEND_FROM_NAME);
                     $mailRecover->addAddress($dataClient['email']);
+                    $mailRecover->addReplyTo(REPLY_TO, REPLY_TO_NAME);
+                    $mailRecover->isHTML(true);;
                     $mailRecover->Subject = 'DocuQuest Reset Password';
                     $mailRecover->isHTML(true);
-                    $mailRecover->ContentType = 'text/html';
                     $mailRecover->Body = '
                         <html>
                             <head>
@@ -145,9 +147,10 @@ switch ($method) {
                             <body> 
                                 <strong>Your OTP is:</strong>
                                 <br/>
-                                <h3>'.htmlspecialchars($stringOTP, ENT_QUOTES, 'UTF-8').'</h3>
+                                <h2>'.htmlspecialchars($stringOTP, ENT_QUOTES, 'UTF-8').'</h2>
     
                                 <p>DO NOT use on any OTP code unless you are the one who sent it.</p>
+                                <p>This OTP code expires in 5 Minutes.</p>
                                 <br/>
                                 <i>Do not reply to this email.</i>
                             </body>
@@ -158,22 +161,24 @@ switch ($method) {
                     DO NOT REPLY TO THIS EMAIL.
                     ';
 
-                    $mailRecover->send();
-    
-                    $response = [
-                        'status'=>1,
-                        'message'=> 'Found a client account with the given email',
-                        'foundEmail'=> $dataClient['email'],
-                        'otpData'=>[
-                            'expiry' => $expiry,
-                            'otp' => $stringOTP
-                        ]
-                    ];
+                    if ($mailRecover->send())
+                    {
+                        // TODO verify otp only on backend
+                        $response = [
+                            'status'=>1,
+                            'message'=> 'Found a client account with the given email',
+                            'foundEmail'=> $dataClient['email'],
+                            'otpData'=>[
+                                'expiry' => $expiry,
+                                'otp' => $stringOTP
+                            ]
+                        ];
+                    }
                 } catch (Exception $e) {
                     // Handle the error
                     $response = [
                         'status'=>0,
-                        'message'=> "Message could not be sent. Mailer Error: {$mailRecover->ErrorInfo}"
+                        'message'=> "Message could not be sent to client. Mailer Error: {$mailRecover->ErrorInfo}"
                     ];
                 }
             } else {
