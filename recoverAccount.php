@@ -9,7 +9,7 @@ use OTPHP\TOTP;
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-header("Access-Control-Allow-Methods: POST");
+header("Access-Control-Allow-Methods: PATCH, POST");
 
 $db_attempt = new connectDb;
 $db_connection = $db_attempt->connect(); 
@@ -18,6 +18,32 @@ $css = file_get_contents('http://localhost/api_drts/cssEmailRecover.php'); // ge
 // TODO add cooldown for resetting password
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
+    case 'PATCH':
+        $account = json_decode(file_get_contents(filename: 'php://input'));
+        $hash_newPassword = password_hash($account->finalPassword, PASSWORD_BCRYPT); 
+        $updated_at = date('Y-m-d H:i:s');
+
+        $query_set_newpassword = "UPDATE users SET password=:newPassword, updated_at=:updated WHERE email=:email LIMIT 1";
+        $stmt = $db_connection->prepare($query_set_newpassword);
+        $stmt->bindParam(':newPassword', $hash_newPassword);
+        $stmt->bindParam(':updated', $updated_at);
+        $stmt->bindParam(':email', $account->email);
+        
+        if ($stmt->execute()) {
+            $response = [
+                'status'=>1,
+                'message'=>'PASSWORD SUCCESSFULLY CHANGED',
+            ];
+        } else {
+            $response = [
+                'status'=>1,
+                'message'=>'FAILED TO CHANGE PASSWORD',
+            ];
+        }
+
+        echo json_encode($response);
+        break;
+
     case 'POST':
         $account = json_decode(file_get_contents(filename: 'php://input'));
         // $token_verify = md5(rand()); 
@@ -32,7 +58,6 @@ switch ($method) {
         
         $query_otp_user = "UPDATE `users` SET otp=:otp, otp_expires_at=:otp_expire WHERE email=:email LIMIT 1";
         $query_email_user = "SELECT `email` FROM users WHERE email=:email LIMIT 1";
-        $query_email_client = "SELECT `email` FROM clients WHERE email=:email LIMIT 1";
 
         // check for account in users table
         $stmt = $db_connection->prepare($query_email_user);
@@ -109,7 +134,7 @@ switch ($method) {
         } else {
             $response = [
                 'status'=>0,
-                'message'=> 'SORRY, Did not find a user account with this email',
+                'message'=> 'SORRY, Did not find a user account with this email'
             ];
         }
 

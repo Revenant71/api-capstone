@@ -1,4 +1,5 @@
 <?php
+require_once('connectDb.php');
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
@@ -10,7 +11,7 @@ $db_connection = $db_attempt->connect();
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'POST':
-        $input = json_decode(file_get_contents('php://input'));
+        $input = json_decode(file_get_contents(filename: 'php://input'));
 
         $query_select_otp = "SELECT `otp`, `otp_expires_at`, `otp_attempts` FROM users WHERE email=:email LIMIT 1";
         $stmt = $db_connection->prepare($query_select_otp);

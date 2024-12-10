@@ -98,6 +98,6 @@ $client2->insertClient("456", "Simon Says", "sisa.swu@phinmaed.com", "1234567890
 $client3 = new Client();
 $client3->insertClient("999", "King Von", "kvon.swu@phinmaed.com", "1234567890", "kvon123");
 
-// $client3 = new Client();
-// $client3->insertClient("71", "Hans Seno", "hansseno2020@gmail.com", "1234567890", "hans123");
+$user2 = new User();
+$user2->insertUser('Hans Seno', 'hansseno2020@gmail.com', 'hans123', 'EMPLOYEE');
 ?>
