@@ -82,8 +82,8 @@ class Client {
     }
 }
 
-// $userAdmin = new User();
-// $userAdmin->insertUser('Dr. Angelita Canene', 'apcanene.swu@phinmaed.com', 'canene123', 'ADMIN');
+$userAdmin = new User();
+$userAdmin->insertUser('Dr. Angelita Canene', 'apcanene.swu@phinmaed.com', 'canene123', 'ADMIN');
 
 // debug admin account
 /* $userAdmin = new User();

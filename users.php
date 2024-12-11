@@ -52,13 +52,17 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
         
         // For Registrar to create new staff accounts
         case 'POST':
+            // TODO use phpmailer to 
+
             $user = json_decode(file_get_contents('php://input'));
             // remember_token,
             // :remember,
-            $qy = "INSERT INTO users(img_profile, name, email, email_verified_at,
+            // email_verified_at,
+            // :verified,
+            $qy = "INSERT INTO users(img_profile, name, email,
             phone, password, account_type, 
             created_at, updated_at) 
-            VALUES(:pfp, :name, :email, :verified, :phone, :pass,
+            VALUES(:pfp, :name, :email,  :phone, :pass,
             :role,  :created, :updated)";
             
             if (isset($user->profilePicture)) {
@@ -81,7 +85,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':pfp', $foundPicture, PDO::PARAM_LOB);
             $stmt->bindParam(':name', $user->staffName);
             $stmt->bindParam(':email', $user->staffEmail);
-            $stmt->bindParam(':verified', $user->verified); // TODO verification feature (one time email?)
+            // $stmt->bindParam(':verified', $user->verified); // TODO verification feature (one time email?)
             $stmt->bindParam(':phone', $user->staffPhone);
             $stmt->bindParam(':pass', $hash_pass); 
             $stmt->bindParam(':role', $user->staffRole);
