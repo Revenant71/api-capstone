@@ -32,7 +32,13 @@ session_start();
             $found_user = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if ($found_user) {
-                if (password_verify($received_plainPass, $found_user['password']) ){
+                if ($found_user['status'] !== 'active') {
+                    // User is deactivated
+                    $response = [
+                        'status' => 0,
+                        'message' => 'Your account is deactivated. Please contact support.'
+                    ];
+                } elseif (password_verify($received_plainPass, $found_user['password']) ){
                     // login is successful
                     $_SESSION['id_user'] = $found_user['id'];
                     $_SESSION['role_user'] = $found_user['account_type'];

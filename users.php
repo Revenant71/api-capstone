@@ -52,7 +52,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
         
         // For Registrar to create new staff accounts
         case 'POST':
-            // TODO use phpmailer to 
+            // TODO use phpmailer to verify account
 
             $user = json_decode(file_get_contents('php://input'));
             // remember_token,
@@ -181,25 +181,27 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             
         case 'DELETE':
             $found_id = isset($_GET['id']) ? $_GET['id'] : null;
-                
+            error_log("Received ID for deactivation: " . $found_id); // Log the received ID
+            
             if (!$found_id || !is_numeric($found_id)) {
+                error_log("Invalid or missing ID");
                 echo json_encode(['status' => 0, 'message' => 'Invalid or missing ID']);
                 exit;
             }
 
             try {
-                $qy = "DELETE FROM users WHERE id=:id";
+                $qy = "UPDATE users SET status = 'deactivated', updated_at = NOW() WHERE id = :id";
                 $stmt = $db_connection->prepare($qy);
                 $stmt->bindParam(':id', $found_id);
         
                 if ($stmt->execute()) {
-                    echo json_encode(['status' => 1, 'message' => 'User deleted successfully']);
+                    echo json_encode(['status' => 1, 'message' => 'User deactivated successfully']);
                 } else {
-                    error_log("Delete user error: " . json_encode($stmt->errorInfo())); // Log detailed error info
-                    echo json_encode(['status' => 0, 'message' => 'Failed to delete user']);
+                    error_log("Deactivate user error: " . json_encode($stmt->errorInfo())); // Log detailed error info
+                    echo json_encode(['status' => 0, 'message' => 'Failed to deactivate user']);
                 }
             } catch (Exception $e) {
-                error_log("Exception during delete user: " . $e->getMessage());
+                error_log("Exception during deactivate user: " . $e->getMessage());
                 echo json_encode(['status' => 0, 'message' => 'Internal server error during delete']);
             }
 

@@ -15,7 +15,7 @@ switch ($method) {
         $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
 
         // TODO get image
-        if (isset($found_reference_no) && is_numeric($found_reference_no)) {
+        if (isset($found_reference_no)) {
             $qy = "
             SELECT 
                 TCN.*, 
@@ -37,7 +37,7 @@ switch ($method) {
             ";
 
             $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_INT);
+            $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
             $stmt->execute();
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
         } else {
@@ -70,16 +70,18 @@ switch ($method) {
     case 'POST':
         $transaction = json_decode(file_get_contents('php://input'), true);
 
+        // id_owner,
+        // :id_owner,
         $qy = "
         INSERT INTO transactions (
             reference_number, id_doc, name_req, phone_req, email_req, 
-            id_swu, id_owner, name_owner, phone_owner, course, 
+            id_swu, name_owner, phone_owner, course, 
             catg_req, purpose_req, desc_req, filepath_receipt, 
             statusPayment, statusTransit, id_employee, overdue_days, 
             created_at, updated_at
         ) VALUES (
             :reference_number, :id_doc, :name_req, :phone_req, :email_req, 
-            :id_swu, :id_owner, :name_owner, :phone_owner, :course, 
+            :id_swu,  :name_owner, :phone_owner, :course, 
             :catg_req, :purpose_req, :desc_req, :filepath_receipt, 
             :statusPayment, :statusTransit, :id_employee, :overdue_days, 
             :created_at, :updated_at
@@ -105,7 +107,7 @@ switch ($method) {
             ':phone_req' => $transaction['phone_req'],
             ':email_req' => $transaction['email_req'],
             ':id_swu' => $transaction['id_swu'],
-            ':id_owner' => $transaction['id_owner'],
+            // ':id_owner' => $transaction['id_owner'],
             ':name_owner' => $transaction['name_owner'],
             ':phone_owner' => $transaction['phone_owner'],
             ':course' => $transaction['course'],
