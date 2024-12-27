@@ -59,7 +59,7 @@ session_start();
             } else {
                 // User does not exist
                 error_log("No user found with email: $received_email");
-                $response = ['status' => 0, 'message' => 'No user found with the provided email.'];
+                $response = ['status' => 0, 'message' => 'No user found with the provided credentials.'];
             }
 
             echo json_encode($response);

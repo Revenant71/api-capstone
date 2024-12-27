@@ -1,11 +1,18 @@
 <?php
 require_once('connectDb.php');
+require 'configSmtp.php'; 
+require 'vendor/autoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
+use OTPHP\TOTP;
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
     
     $db_attempt = new connectDb;
     $db_connection = $db_attempt->connect(); 
+    $css = file_get_contents('http://localhost/api_drts/cssEmailRecover.php');
 
     // for "remember me" setting
     function createRememberToken($length = 50){ // default is 50 bytes
@@ -94,20 +101,86 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':updated', $updated_at);
 
             if ($stmt->execute()) {
-                $response = [
-                    'status' => 1,
-                    'message' => 'User created successfully',
-                    'newUser' => [
-                        'id' => $db_connection->lastInsertId(),
-                        'pfp' => $foundPicture,
-                        'name' => $user->staffName,
-                        'email' => $user->staffEmail,
-                        'phone' => $user->staffPhone,
-                        'role' => $user->staffRole,
-                        'createdAt' => $created_at,
-                        'updatedAt' => $updated_at,
-                    ]
-                ];
+                try {
+                    // config
+                    $mailCreate = new PHPMailer(true);
+                    $mailCreate->Host = MAILHOST;
+                    $mailCreate->isSMTP();
+                    $mailCreate->SMTPAuth = true;
+                    $mailCreate->Username = USERNAME;
+                    $mailCreate->Password = PASSWORD;
+                    $mailCreate->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
+                    $mailCreate->Port = 587;
+    
+                    // from, to, body
+                    $mailCreate->setFrom(SEND_FROM, SEND_FROM_NAME);
+                    $mailCreate->addAddress($user->staffEmail);
+                    $mailCreate->addReplyTo(REPLY_TO, REPLY_TO_NAME);
+                    $mailCreate->isHTML(true);
+                    $mailCreate->Subject = 'Welcome to DocuQuest';
+                    // TODO change localhost:3000 to real domain
+                    // TODO link to component for verify email
+                    // TODO apply css to body
+                    $mailCreate->Body = '
+                        <html>
+                            <head>
+                            <style>
+                                ' . $css . '
+                            </style>
+                            </head>
+                            <body> 
+                                <strong>Hi '.$user->staffName.', Welcome to DocuQuest!</strong>
+                                <br/>
+                                <p>Your account has been created.</p>
+                                <em>Below are your credentials for your reference.</em>
+                                <h2>Username: '.$user->staffName.'</h2>  
+                                <h2>Email: '.$user->staffEmail.'</h2>
+                                <h2>Password: '.$user->staffPass.'</h2>       
+                                <br/>
+                                <p>To login and activate your account,</p>
+                                <p>please proceed to <a href="http://localhost:3000/login" target="_blank" title="Click here to login and activate your account.">this link</a></p>
+                                <h3>This an auto-generated email. <em>Please do not reply.</em></h3>
+                            </body>
+                        </html>
+                    ';
+                    $mailCreate->AltBody = '
+                        <strong>Hi '.$user->staffName.', Welcome to DocuQuest!</strong>
+                        <br/>
+                        <p>Your account has been created.</p>
+                        <em>Below are your credentials for your reference.</em>
+                        <h2>Username: '.$user->staffName.'</h2>  
+                        <h2>Email: '.$user->staffEmail.'</h2>
+                        <h2>Password: '.$user->staffPass.'</h2>
+                        <br/>  
+                        <p>To login and activate your account,</p>
+                        <p>please proceed to <a href="http://localhost:3000/login" target="_blank" title="Click here to login and activate your account.">this link</a></p>
+                        <h3>This an auto-generated email. <em>Please do not reply.</em></h3>
+                    ';
+    
+                    if ($mailCreate->send())
+                    {
+                        $response = [
+                            'status' => 1,
+                            'message' => 'User created successfully',
+                            'newUser' => [
+                                'id' => $db_connection->lastInsertId(),
+                                'pfp' => $foundPicture,
+                                'name' => $user->staffName,
+                                'email' => $user->staffEmail,
+                                'phone' => $user->staffPhone,
+                                'role' => $user->staffRole,
+                                'createdAt' => $created_at,
+                                'updatedAt' => $updated_at,
+                            ]
+                        ];
+                    }
+                } catch (Exception $e) {
+                    // Handle the error
+                    $response = [
+                        'status'=>0,
+                        'message'=> "Email could not be sent to user. Mailer Error: {$mailCreate->ErrorInfo}",
+                    ];
+                }   
             } else {
                 $response = ['status'=>0, 'message'=>'SORRY, Failed to create user!'];
             }

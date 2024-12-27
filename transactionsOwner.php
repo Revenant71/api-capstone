@@ -21,7 +21,7 @@ switch ($method){
             DOC.category_id AS DOC_category_id
         FROM transactions TCN
         LEFT JOIN documents DOC ON TCN.id_doc = DOC.id
-        WHERE TCN.name_owner LIKE :name_owner OR TCN.reference_number LIKE :reference_number
+        WHERE TCN.name_last_owner LIKE :lastname_owner OR TCN.reference_number LIKE :reference_number
         UNION
         SELECT 
             TCN.*, 
@@ -30,7 +30,7 @@ switch ($method){
             DOC.category_id AS DOC_category_id
         FROM transactions TCN
         RIGHT JOIN documents DOC ON TCN.id_doc = DOC.id
-        WHERE TCN.name_owner LIKE :name_owner OR TCN.reference_number LIKE :reference_number
+        WHERE TCN.name_last_owner LIKE :lastname_owner OR TCN.reference_number LIKE :reference_number
         LIMIT 1;
         ";
         
@@ -40,7 +40,7 @@ switch ($method){
 
         $stmt = $db_connection->prepare($qy);
         $stmt->bindParam(':reference_number', $found_reference_no, PDO::PARAM_STR);
-        $stmt->bindParam(':name_owner', $found_owner, PDO::PARAM_STR);
+        $stmt->bindParam(':lastname_owner', $found_owner, PDO::PARAM_STR);
         $stmt->execute();
         $data = $stmt->fetch(PDO::FETCH_ASSOC);
 

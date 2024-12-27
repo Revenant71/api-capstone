@@ -32,25 +32,45 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             break;
         
         case 'POST':
-            $category = json_decode(file_get_contents('php://input'));
-
-            $qy = "INSERT INTO categories_docs(name_ctg_doc, created_at, updated_at) VALUES(:name, :created, :updated)";
-            $stmt = $db_connection->prepare($qy);
-            
-            $created_at = date('Y-m-d H:i:s');            
-            $updated_at = date('Y-m-d H:i:s');
-
-            $stmt->bindParam(':name', $category->txt_name_catg); // TODO follow form field name
-            $stmt->bindParam(':created', $created_at);
-            $stmt->bindParam(':updated', $updated_at);
-
-            if ($stmt->execute()) {
-                $response = ['status'=>1, 'message'=>'POST document category successful.'];
+            $data = json_decode(file_get_contents('php://input'), true);
+        
+            if ($data) {
+                // Log incoming data for debugging
+                error_log(print_r($data, true));
+        
+                // Validate the data
+                if (isset($data['name'], $data['price'], $data['processing_days'])) {
+                    // SQL query to insert the document into `categories_docs`
+                    $qy = "INSERT INTO categories_docs(name_ctg_doc, price, processing_days) 
+                           VALUES(:name, :price, :processing_days)";
+                    
+                    // Prepare the statement
+                    $stmt = $db_connection->prepare($qy);
+                    $stmt->bindParam(':name', $data['name']);
+                    $stmt->bindParam(':price', $data['price']);
+                    $stmt->bindParam(':processing_days', $data['processing_days']);
+        
+                    // Execute the query and check for success
+                    if ($stmt->execute()) {
+                        // Return success message as a JSON response
+                        $response = ['status' => 1, 'message' => "Document added to categories_docs successfully."];
+                    } else {
+                        // Return failure message if insertion fails
+                        $response = ['status' => 0, 'message' => "Failed to add document to categories_docs."];
+                    }
+        
+                    // Send the response back to the frontend
+                    echo json_encode($response);
+                } else {
+                    // If required fields are missing, send error
+                    $response = ['status' => 0, 'message' => 'Missing required fields.'];
+                    echo json_encode($response);
+                }
             } else {
-                $response = ['status'=>0, 'message'=>'SORRY, POST document category failed.'];
+                // If data is not sent, send error
+                $response = ['status' => 0, 'message' => 'No data received.'];
+                echo json_encode($response);
             }
-            
-            echo json_encode($response);
             break;
 
         case 'PATCH':
@@ -58,7 +78,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
 
-            $qy = "UPDATE categories_docs SET name_ctg_doc=:name, updated_at=:updated WHERE id=:id";
+            $qy = "UPDATE categories_docs SET name_ctg_doc=:name, price=:price, processing_days=:processing, updated_at=:updated WHERE id=:id";
             $stmt = $db_connection->prepare($qy);
             
             $updated_at = date('Y-m-d H:i:s');
@@ -67,7 +87,9 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 $stmt->bindParam(':id', $found_id);
             }
 
-            $stmt->bindParam(':name', $category->txt_name_catg);  // TODO follow form field name
+            $stmt->bindParam(':name', $category->txt_name);  // TODO follow form field name
+            $stmt->bindParam(':price', $category->txt_price);  // TODO follow form field name
+            $stmt->bindParam(':processing_days', $category->txt_processing_days);  // TODO follow form field name
             $stmt->bindParam(':updated', $updated_at);
 
             if ($stmt->execute()) {

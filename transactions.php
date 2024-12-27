@@ -1,5 +1,11 @@
 <?php
 require_once('connectDb.php');
+require 'configSmtp.php'; 
+require 'vendor/autoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
+use OTPHP\TOTP;
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: *");
@@ -7,6 +13,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
 $db_attempt = new connectDb;
 $db_connection = $db_attempt->connect();
+$css = file_get_contents('http://localhost/api_drts/cssEmailRecover.php');
 
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
@@ -69,7 +76,8 @@ switch ($method) {
         
     case 'POST':
         $transaction = json_decode(file_get_contents('php://input'), true);
-
+        // TODO account for all attributes where $transaction->quantity_ctg_1_{index_here}
+        // TODO check which attributes are empty, do not bind empty attributes
         // id_owner,
         // :id_owner,
         $qy = "
@@ -118,6 +126,87 @@ switch ($method) {
         ]));
 
         if ($stmt->execute()) {
+            // TODO send total, breakdown, reference number
+            try {
+                // config
+                $mailRecover = new PHPMailer(true);
+                $mailRecover->Host = MAILHOST;
+                $mailRecover->isSMTP();
+                $mailRecover->SMTPAuth = true;
+                $mailRecover->Username = USERNAME;
+                $mailRecover->Password = PASSWORD;
+                $mailRecover->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
+                $mailRecover->Port = 587;
+
+                // from, to, body
+                $mailRecover->setFrom(SEND_FROM, SEND_FROM_NAME);
+                $mailRecover->addAddress($transaction['email_req']);
+                $mailRecover->addReplyTo(REPLY_TO, REPLY_TO_NAME);
+                $mailRecover->isHTML(true);
+                $mailRecover->Subject = 'Docuquest Request Sent';
+                // TODO use html table for sales invoice
+                $mailRecover->Body = '
+                    <html>
+                        <head>
+                        <style>
+                            ' . $css . '
+                        </style>
+                        </head>
+                        <body> 
+                            <strong>Reference number:</strong>
+                            <h2>'.$transaction['reference_number'].'</h2>
+                            <br/>
+                            <strong>Document:</strong>
+                            
+                            <br/>
+                            <strong>Quantity:</strong>
+                            
+                            <br/>
+                            <strong>Price:</strong>
+                            
+                            <br/>
+                        
+                            <strong>Breakdown:</strong>
+                              <table>
+
+                              </table>
+                            <br/>
+                            
+                            <i>Do not reply to this email.</i>
+                        </body>
+                    </html>
+                ';
+                $mailRecover->AltBody = '
+                    <strong>Reference number:</strong>
+                    <h2>'.$transaction['reference_number'].'</h2>
+                    DO NOT REPLY TO THIS EMAIL.
+                ';
+
+                if ($mailRecover->send())
+                {
+                    $stmt = $db_connection->prepare($query_otp_user);
+                    $stmt->bindParam(':otp', $hashedOTP);
+                    $stmt->bindParam(':otp_expire', $expiryDatetime);
+                    $stmt->bindParam(':email', $dataUser['email']);
+                    $stmt->execute();
+
+                    $response = [
+                        'status'=>1,
+                        'message'=> 'Found a user account with the given email',
+                        'otpData'=>[
+                            'expiry' => $expiry,
+                        ]
+                    ];
+                }
+            } catch (Exception $e) {
+                // Handle the error
+                $response = [
+                    'status'=>0,
+                    'message'=> "Message could not be sent to user. Mailer Error: {$mailRecover->ErrorInfo}",
+                ];
+            }   
+
+
             $response = ['status'=>1, 'message'=>'POST transaction successful.'];
         } else {
             $response = ['status'=>0, 'message'=>'SORRY, POST transaction failed.'];
