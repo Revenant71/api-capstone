@@ -41,15 +41,18 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 // Validate the data
                 if (isset($data['name'], $data['price'], $data['processing_days'])) {
                     // SQL query to insert the document into `categories_docs`
-                    $qy = "INSERT INTO categories_docs(name, price, processing_days) 
-                           VALUES(:name, :price, :processing_days)";
+                    $qy = "INSERT INTO categories_docs(name, price, processing_days, luzon_price, visayas_price, mindanao_price) 
+                           VALUES(:name, :price, :processing_days, :luzon_price, :visayas_price, :mindanao_price)";
                     
                     // Prepare the statement
                     $stmt = $db_connection->prepare($qy);
                     $stmt->bindParam(':name', $data['name']);
                     $stmt->bindParam(':price', $data['price']);
                     $stmt->bindParam(':processing_days', $data['processing_days']);
-        
+                    $stmt->bindParam(':luzon_price', $data['luzon_price']);
+                    $stmt->bindParam(':visayas_price', $data['visayas_price']);
+                    $stmt->bindParam(':mindanao_price', $data['mindanao_price']);
+
                     // Execute the query and check for success
                     if ($stmt->execute()) {
                         // Return success message as a JSON response
@@ -78,7 +81,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
 
-            $qy = "UPDATE categories_docs SET name=:name, price=:price, processing_days=:processing, updated_at=:updated WHERE id=:id";
+            $qy = "UPDATE categories_docs SET name=:name, price=:price, processing_days=:processing, luzon_price=:luzon_price, visayas_price=:visayas_price, mindanao_price=:mindanao_price, updated_at=:updated WHERE id=:id";
             $stmt = $db_connection->prepare($qy);
             
             $updated_at = date('Y-m-d H:i:s');
@@ -91,6 +94,9 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':price', $category->txt_price);  // TODO follow form field name
             $stmt->bindParam(':processing_days', $category->txt_processing_days);  // TODO follow form field name
             $stmt->bindParam(':updated', $updated_at);
+            $stmt->bindParam(':luzon_price', $category->txt_luzon_price);  // TODO follow form field name
+            $stmt->bindParam(':visayas_price', $category->txt_visayas_price);  // TODO follow form field name
+            $stmt->bindParam(':mindanao_price', $category->txt_mindanao_price);  // TODO follow form field name
 
             if ($stmt->execute()) {
                 $response = ['status'=>1, 'message'=>'PATCH document category successful.'];

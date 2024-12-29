@@ -10,23 +10,21 @@ $db_connection = $db_attempt->connect();
 
 // Check if connection was successful
 if (!$db_connection) {
-    die("Connection failed: " . mysqli_connect_error());
+    die(json_encode(["status" => "error", "message" => "Connection failed: " . mysqli_connect_error()])); 
 }
 
 // Handle GET request to fetch shipping fees
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     // Fetch shipping fees from the database
-    $sql = "SELECT region, fee FROM shipping_fees";
+    $sql = "SELECT luzon_price, visayas_price, mindanao_price FROM shipping_fees WHERE id = 1";
     $result = $db_connection->query($sql);
 
-    $shippingFees = [];
-    if ($result && $result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $shippingFees[$row['region']] = $row['fee'];
-        }
-        echo json_encode($shippingFees);
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        echo json_encode($row); // Return shipping fees as a JSON response
     } else {
-        echo json_encode([]);
+        error_log("No shipping fees found in the database");
+        echo json_encode(['status' => 'error', 'message' => 'No shipping fees found']);
     }
 }
 
@@ -34,26 +32,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get data from the request body (shipping fees)
     $data = json_decode(file_get_contents("php://input"), true);
+    error_log("Received data: " . print_r($data, true)); // Log the received data
 
-    // Begin a transaction to update multiple records
-    $db_connection->begin_transaction();
-
-    try {
-        // Prepare and execute an update for each region
-        foreach ($data as $region => $fee) {
-            $sql = "UPDATE shipping_fees SET fee = ? WHERE region = ?";
-            $stmt = $db_connection->prepare($sql);
-            $stmt->bind_param("ds", $fee, $region);
-            $stmt->execute();
+    if (isset($data['Luzon'], $data['Visayas'], $data['Mindanao'])) {
+        // Validate input data (check if they are numbers)
+        if (!is_numeric($data['Luzon']) || !is_numeric($data['Visayas']) || !is_numeric($data['Mindanao'])) {
+            error_log("Invalid shipping fee values: Luzon: {$data['Luzon']}, Visayas: {$data['Visayas']}, Mindanao: {$data['Mindanao']}");
+            echo json_encode(['status' => 'error', 'message' => 'Invalid shipping fee values']);
+            exit;
         }
 
-        // Commit the transaction
-        $db_connection->commit();
-        echo json_encode(['status' => 'success']);
-    } catch (Exception $e) {
-        // Rollback the transaction if an error occurs
-        $db_connection->rollback();
-        echo json_encode(['status' => 'error', 'message' => 'Failed to update shipping fees']);
+        // Prepare the SQL query for updating shipping fees
+        $sql = "UPDATE shipping_fees SET luzon_price = ?, visayas_price = ?, mindanao_price = ? WHERE id = 1";
+        $stmt = $db_connection->prepare($sql);
+        
+        // Log SQL preparation status
+        if ($stmt === false) {
+            error_log('MySQL prepare error: ' . $db_connection->error);
+            echo json_encode(['status' => 'error', 'message' => 'Failed to prepare the query']);
+            exit;
+        }
+
+        error_log("Prepared SQL query successfully");
+
+        // Bind the parameters and execute the query
+        $stmt->bind_param('ddd', $data['Luzon'], $data['Visayas'], $data['Mindanao']);
+
+        if ($stmt->execute()) {
+            error_log("Shipping fees updated successfully");
+            echo json_encode(['status' => 'success', 'message' => 'Shipping fees updated successfully']);
+        } else {
+            // Log execution error
+            error_log('MySQL execution error: ' . $stmt->error);
+            echo json_encode(['status' => 'error', 'message' => 'Failed to update shipping fees']);
+        }
+
+        // Close the statement
+        $stmt->close();
+    } else {
+        error_log("Missing data for shipping fees");
+        echo json_encode(['status' => 'error', 'message' => 'Missing data for shipping fees']);
     }
 }
 
