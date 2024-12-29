@@ -36,7 +36,7 @@ switch ($method) {
             ];
         } else {
             $response = [
-                'status'=>1,
+                'status'=>0,
                 'message'=>'FAILED TO CHANGE PASSWORD',
             ];
         }

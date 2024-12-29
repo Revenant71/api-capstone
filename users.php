@@ -190,66 +190,105 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
         case 'PATCH':
             $user = json_decode(file_get_contents('php://input'));
+
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-            $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+            $found_id = isset($URI_array[3]) ? intval($URI_array[3]) : null;
             
             if (!$found_id || !is_numeric($found_id)) {
-                echo json_encode(['status' => 0, 'message' => 'Invalid or missing ID']);
+                echo json_encode(['status' => 0, 'message' => 'Invalid or missing user ID']);
                 exit;
             }
             
-            $query = "UPDATE users SET ";
-            $params = [];
+            // default response
+            $response = ['status' => 0, 'message' => 'No changes made'];
 
-            if (isset($user->profilePicture)) {
-                if (preg_match('/^data:(image\/\w+);base64,/', $user->profilePicture, $type)) {
-                    $mimeType = $type[1];
-                    $foundPicture = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $user->profilePicture));
-                    $query .= "img_profile=:img_profile, ";
-                    $params[':img_profile'] = $foundPicture;
+            // if ($_SERVER['CONTENT_TYPE'] !== 'multipart/form-data') {
+            //     echo json_encode(['status' => 0, 'message' => 'Invalid content type.']);
+            //     exit;
+            // }
+
+            parse_str(file_get_contents("php://input"), $_POST);
+            // FIXME these are always null
+            $name = isset($_POST['staffName']) ? $_POST['staffName'] : null;
+            $email = isset($_POST['staffEmail']) ? $_POST['staffEmail'] : null;
+            $phone = isset($_POST['staffPhone']) ? $_POST['staffPhone'] : null;
+            $role = isset($_POST['staffRole']) ? $_POST['staffRole'] : null;
+
+            // $user->profilePicture
+            $foundPicture = null;
+            if (!empty($_FILES['file_pfp']['tmp_name'])) {
+                $fileTempName = $_FILES['file_pfp']['tmp_name'];
+                $fileMimeType = mime_content_type($fileTempName);
+                
+                // check if file is an image
+                if (strpos($fileMimeType, 'image/') === 0) {
+                    $foundPicture = file_get_contents($fileTempName);
                 } else {
-                    echo json_encode(['status' => 0, 'message' => 'Invalid image format']);
+                    echo json_encode(['status' => 0, 'message' => 'Invalid file type. Only images are allowed.']);
                     exit;
                 }
             }
-            if (isset($user->staffName)) {
+
+            $query = "UPDATE users SET ";   
+            $params = [];
+            
+            if ($name) {
                 $query .= "name=:name, ";
-                $params[':name'] = $user->staffName;
+                $params[':name'] = $name;
             }
-            if (isset($user->staffEmail)) {
+            if ($email) {
                 $query .= "email=:email, ";
-                $params[':email'] = $user->staffEmail;
+                $params[':email'] = $email;
             }
-            if (isset($user->staffPhone)) {
+            if ($phone) {
                 $query .= "phone=:phone, ";
-                $params[':phone'] = $user->staffPhone;
+                $params[':phone'] = $phone;
             }
-            if (isset($user->staffRole)) {
+            if ($role) {
                 $query .= "account_type=:role, ";
-                $params[':role'] = $user->staffRole;
+                $params[':role'] = $role;
             }
-            // if (isset($user->staffPass)) {
-            //     $query .= "password=:pass, ";
-            //     $params[':pass'] = password_hash($user->staffPass, PASSWORD_BCRYPT);
-            // }
+            if ($foundPicture) {
+                $query .= "img_profile=:img_profile, ";
+                $params[':img_profile'] = $foundPicture;
+            }
             
             $query .= "updated_at=:updated WHERE id=:id";
             $params[':updated'] = date('Y-m-d H:i:s');
             $params[':id'] = $found_id;
             
-            $stmt = $db_connection->prepare($query);
-            
-            if ($stmt->execute($params)) {
-                $stmt = $db_connection->prepare("SELECT * FROM users WHERE id=:id");
-                $stmt->bindParam(':id', $found_id);
-                $stmt->execute();
-                $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-                echo json_encode(['status' => 1, 'message' => 'User updated', 'data' => $updatedUser]);
-            } else {
-                echo json_encode(['status' => 0, 'message' => 'Update failed']);
-            }
+            try {
+              $stmt = $db_connection->prepare($query);
 
+                if ($stmt->execute($params)) {
+                  $response = [
+                  'status' => 1,
+                  'message' => 'User updated',
+                  'data_recieved' => [
+                    'name' => $name,
+                    'email' => $email,
+                    'phone' => $phone,
+                    'role' => $role,
+                    'foundPicture' => $foundPicture
+                  ]];
+                  
+                  // update user successful
+                  $stmt = $db_connection->prepare("SELECT * FROM users WHERE id=:id");
+                  $stmt->bindParam(':id', $found_id);
+                  $stmt->execute();
+                  $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
+
+                  $response['data'] = $updatedUser;
+                  //$response = ['status' => 1, 'message' => 'User updated', 'data' => $updatedUser];
+                } else {
+                  // update user failed
+                  $response = ['status' => 0, 'message' => 'Update user failed!'];
+                }
+            } catch (PDOException $e) {
+                $response = ['status' => 0, 'message' => 'Database ERROR: ' . $e->getMessage()];
+            }
+            
+            echo json_encode($response);
             break;
             
         case 'DELETE':

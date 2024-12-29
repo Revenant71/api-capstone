@@ -41,7 +41,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 // Validate the data
                 if (isset($data['name'], $data['price'], $data['processing_days'])) {
                     // SQL query to insert the document into `categories_docs`
-                    $qy = "INSERT INTO categories_docs(name_ctg_doc, price, processing_days) 
+                    $qy = "INSERT INTO categories_docs(name, price, processing_days) 
                            VALUES(:name, :price, :processing_days)";
                     
                     // Prepare the statement
@@ -78,7 +78,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
             $found_id = $URI_array[3];
 
-            $qy = "UPDATE categories_docs SET name_ctg_doc=:name, price=:price, processing_days=:processing, updated_at=:updated WHERE id=:id";
+            $qy = "UPDATE categories_docs SET name=:name, price=:price, processing_days=:processing, updated_at=:updated WHERE id=:id";
             $stmt = $db_connection->prepare($qy);
             
             $updated_at = date('Y-m-d H:i:s');
