@@ -21,7 +21,6 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = isset($URI_array[3]) ? $URI_array[3] : null;
 
-        // TODO get image
         if (isset($found_reference_no)) {
             $qy = "
             SELECT 
@@ -75,30 +74,41 @@ switch ($method) {
         break;
         
     case 'POST':
+        // TODO encType="multipart/form-data
         $transaction = json_decode(file_get_contents('php://input'), true);
-        // TODO account for all attributes where $transaction->quantity_ctg_1_{index_here}
         // TODO check which attributes are empty, do not bind empty attributes
-        // id_owner,
-        // :id_owner,
+        //  phone_owner,
+        // :phone_owner,
+        // file_portrait,
+        // :file_portrait,
         $qy = "
         INSERT INTO transactions (
-            reference_number, id_doc, name_req, phone_req, email_req, 
-            id_swu, name_owner, phone_owner, course, 
-            catg_req, purpose_req, desc_req, filepath_receipt, 
+            reference_number, service_type, delivery_region,
+            id_doc, doc_name, doc_quantity, price, price_total, 
+            name_req, phone_req, email_req, 
+            id_swu, firstname_owner, middlename_owner, lastname_owner,
+            course, course_year, year_last,
+            purpose_req,
             statusPayment, statusTransit, id_employee, overdue_days, 
             created_at, updated_at
+            " . (!empty($transaction['desc_req']) ? ", desc_req" : "") . "
+            " . (!empty($transaction['file_portrait']) ? ", file_portrait" : "") . "
         ) VALUES (
-            :reference_number, :id_doc, :name_req, :phone_req, :email_req, 
-            :id_swu,  :name_owner, :phone_owner, :course, 
-            :catg_req, :purpose_req, :desc_req, :filepath_receipt, 
+            :reference_number, :service_type, :delivery_region,
+            :id_doc, :doc_name, :doc_quantity, :price, :price_total, 
+            :name_req, :phone_req, :email_req,
+            :id_swu, :firstname_owner, :middlename_owner, :lastname_owner, 
+            :course, :course_year, :year_last, 
+            :purpose_req, 
             :statusPayment, :statusTransit, :id_employee, :overdue_days, 
             :created_at, :updated_at
+            " . (!empty($transaction['desc_req']) ? ", :desc_req" : "") . "
+            " . (!empty($transaction['file_portrait']) ? ", :file_portrait" : "") . "
         )";
 
         $stmt = $db_connection->prepare($qy);
 
         $default_values = [
-            ':id_doc' => null,
             ':id_employee' => null,
             ':overdue_days' => 0,
             ':statusPayment' => 'Not Paid',
@@ -107,26 +117,39 @@ switch ($method) {
             ':updated_at' => date('Y-m-d H:i:s'),
         ];
 
-        $foundReceipt = $transaction['receipt'];
-
         $stmt->execute(array_merge($default_values, [
             ':reference_number' => $transaction['reference_number'],
+            ':service_type' => $transaction['service_type'],
+            ':delivery_region' => $transaction['delivery_region'],
+            ':id_doc' => $transaction['currentDocId'],
+            ':doc_name' => $transaction['currentDocument'],
+            ':doc_quantity' => $transaction['currentQuantity'],
+            ':price' => $transaction['currentPrice'],
+            ':price_total' => $transaction['total_price'],
             ':name_req' => $transaction['name_req'],
             ':phone_req' => $transaction['phone_req'],
             ':email_req' => $transaction['email_req'],
             ':id_swu' => $transaction['id_swu'],
-            // ':id_owner' => $transaction['id_owner'],
-            ':name_owner' => $transaction['name_owner'],
-            ':phone_owner' => $transaction['phone_owner'],
+            ':firstname_owner' => $transaction['name_first'],
+            ':middlename_owner' => $transaction['name_middle'],
+            ':lastname_owner' => $transaction['name_last'],
+            // ':phone_owner' => $transaction['phone_owner'],
             ':course' => $transaction['course'],
-            ':catg_req' => $transaction['catg_req'],
-            ':purpose_req' => $transaction['purpose_req'],
-            ':desc_req' => $transaction['desc_req'],
-            ':filepath_receipt' => $foundReceipt,
+            ':course_year' => $transaction['course_year'],
+            ':year_last' => $transaction['year_last'],
+            ':purpose_req' => $transaction['purpose'],
         ]));
+
+        if (!empty($transaction['desc_req'])) {
+            $execute_values[':desc_req'] = $transaction['desc_req'];
+        }
+        if (!empty($transaction['file_portrait'])) {
+            $execute_values[':file_portrait'] = $transaction['portrait'];
+        }
 
         if ($stmt->execute()) {
             // TODO send total, breakdown, reference number
+            // TODO send email not working
             try {
                 // config
                 $mailRecover = new PHPMailer(true);
@@ -157,20 +180,15 @@ switch ($method) {
                             <h2>'.$transaction['reference_number'].'</h2>
                             <br/>
                             <strong>Document:</strong>
-                            
+                            '.$transaction['currentDocument'].'
                             <br/>
                             <strong>Quantity:</strong>
-                            
+                            '.$transaction['currentQuantity'].'
                             <br/>
                             <strong>Price:</strong>
-                            
+                            '.$transaction['currentPrice'].'
                             <br/>
-                        
-                            <strong>Breakdown:</strong>
-                              <table>
-
-                              </table>
-                            <br/>
+                            // TODO invoice + html table
                             
                             <i>Do not reply to this email.</i>
                         </body>
@@ -179,23 +197,24 @@ switch ($method) {
                 $mailRecover->AltBody = '
                     <strong>Reference number:</strong>
                     <h2>'.$transaction['reference_number'].'</h2>
+                    <br/>
+                    <strong>Document:</strong>
+                    '.$transaction['currentDocument'].'
+                    <br/>
+                    <strong>Quantity:</strong>
+                    '.$transaction['currentQuantity'].'
+                    <br/>
+                    <strong>Price:</strong>
+                    '.$transaction['currentPrice'].'
+                    <br/>            
                     DO NOT REPLY TO THIS EMAIL.
                 ';
 
                 if ($mailRecover->send())
                 {
-                    $stmt = $db_connection->prepare($query_otp_user);
-                    $stmt->bindParam(':otp', $hashedOTP);
-                    $stmt->bindParam(':otp_expire', $expiryDatetime);
-                    $stmt->bindParam(':email', $dataUser['email']);
-                    $stmt->execute();
-
                     $response = [
                         'status'=>1,
-                        'message'=> 'Found a user account with the given email',
-                        'otpData'=>[
-                            'expiry' => $expiry,
-                        ]
+                        'message'=> 'Request confirmation email sent!',
                     ];
                 }
             } catch (Exception $e) {
@@ -214,8 +233,9 @@ switch ($method) {
         
         echo json_encode($response);
         break;
-
+        
     case 'PATCH':
+        // TODO update queries to match updated transactions table
         $transaction = json_decode(file_get_contents('php://input'), true);
 
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
@@ -231,7 +251,7 @@ switch ($method) {
             course = :course, 
             purpose_req = :purpose_req, 
             desc_req = :desc_req, 
-            filepath_receipt = :filepath_receipt,
+            file_portrait = :file_portrait,
             statusPayment = :statusPayment, 
             statusTransit = :statusTransit, 
             id_employee = :id_employee, 
@@ -241,7 +261,7 @@ switch ($method) {
 
         $stmt = $db_connection->prepare($qy);
 
-        $foundReceipt = $transaction['receipt'];
+        $foundPortrait = $transaction['portrait'];
 
         // refer to users for patch
         $stmt->execute([
@@ -250,10 +270,12 @@ switch ($method) {
             ':email_req' => $transaction['email_req'],
             ':id_swu' => $transaction['id_swu'],
             ':name_owner' => $transaction['name_owner'],
+            
             ':course' => $transaction['course'],
             ':purpose_req' => $transaction['purpose_req'],
             ':desc_req' => $transaction['desc_req'],
-            ':filepath_receipt' => $foundReceipt,            
+
+            ':file_portrait' => $foundPortrait,            
             ':statusPayment' => $transaction['statusPayment'],
             ':statusTransit' => $transaction['statusTransit'],
             ':id_employee' => $transaction['id_employee'],

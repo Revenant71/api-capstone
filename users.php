@@ -7,6 +7,7 @@ use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;
 use OTPHP\TOTP;
 header("Access-Control-Allow-Origin: http://localhost:3000");
+header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
 header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
     
@@ -59,19 +60,23 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
         
         // For Registrar to create new staff accounts
         case 'POST':
-            // TODO use phpmailer to verify account
-
             $user = json_decode(file_get_contents('php://input'));
             // remember_token,
             // :remember,
             // email_verified_at,
             // :verified,
-            $qy = "INSERT INTO users(img_profile, name, email,
-            phone, password, account_type, 
+
+            // TODO hardcode status as deactivated, when clicking on hyperlink in email, go to new component to change status as active
+            $qy = "INSERT INTO users(img_profile,
+            firstname, middlename, lastname,
+            email, phone, password, account_type, 
             created_at, updated_at) 
-            VALUES(:pfp, :name, :email,  :phone, :pass,
-            :role,  :created, :updated)";
+            VALUES(:pfp,
+            :firstname, :middlename, :lastname,
+            :email, :phone, :pass, :role,
+            :created, :updated)";
             
+            // TODO insert pfp for new users
             if (isset($user->profilePicture)) {
                 // Extract the Base64 part and validate MIME type
                 if (preg_match('/^data:(image\/\w+);base64,/', $user->profilePicture, $type)) {
@@ -83,6 +88,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 }
             }
 
+            if (!isset($user->staffPass)) {
+                echo json_encode(['status' => 0, 'message' => 'Password is required', 'data' => $user]);
+                exit;
+            }
+
             $hash_pass = password_hash($user->staffPass, PASSWORD_BCRYPT);
             $token = createRememberToken();
             $created_at = date('Y-m-d H:i:s');            
@@ -90,13 +100,14 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
             $stmt = $db_connection->prepare($qy);
             $stmt->bindParam(':pfp', $foundPicture, PDO::PARAM_LOB);
-            $stmt->bindParam(':name', $user->staffName);
+            $stmt->bindParam(':firstname', $user->staffFirstName);
+            $stmt->bindParam(':middlename', $user->staffMiddleName);
+            $stmt->bindParam(':lastname', $user->staffLastName);
             $stmt->bindParam(':email', $user->staffEmail);
             // $stmt->bindParam(':verified', $user->verified); // TODO verification feature (one time email?)
             $stmt->bindParam(':phone', $user->staffPhone);
             $stmt->bindParam(':pass', $hash_pass); 
             $stmt->bindParam(':role', $user->staffRole);
-            //$stmt->bindParam(':remember', $token);
             $stmt->bindParam(':created', $created_at); 
             $stmt->bindParam(':updated', $updated_at);
 
@@ -129,11 +140,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                             </style>
                             </head>
                             <body> 
-                                <strong>Hi '.$user->staffName.', Welcome to DocuQuest!</strong>
+                                <strong>Hi '.$user->staffFirstName.', Welcome to DocuQuest!</strong>
                                 <br/>
                                 <p>Your account has been created.</p>
                                 <em>Below are your credentials for your reference.</em>
-                                <h2>Username: '.$user->staffName.'</h2>  
+                                <h2>Username: '.$user->staffLastName.', '.$user->staffFirstName.' '.$user->staffMiddleName.'</h2> 
                                 <h2>Email: '.$user->staffEmail.'</h2>
                                 <h2>Password: '.$user->staffPass.'</h2>       
                                 <br/>
@@ -144,11 +155,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                         </html>
                     ';
                     $mailCreate->AltBody = '
-                        <strong>Hi '.$user->staffName.', Welcome to DocuQuest!</strong>
+                        <strong>Hi '.$user->staffFirstName.', Welcome to DocuQuest!</strong>
                         <br/>
                         <p>Your account has been created.</p>
                         <em>Below are your credentials for your reference.</em>
-                        <h2>Username: '.$user->staffName.'</h2>  
+                        <h2>Username: '.$user->staffLastName.', '.$user->staffFirstName.' '.$user->staffMiddleName.'</h2>   
                         <h2>Email: '.$user->staffEmail.'</h2>
                         <h2>Password: '.$user->staffPass.'</h2>
                         <br/>  
@@ -165,7 +176,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                             'newUser' => [
                                 'id' => $db_connection->lastInsertId(),
                                 'pfp' => $foundPicture,
-                                'name' => $user->staffName,
+                                'name' => $user->staffLastName . ', ' . $user->staffFirstName . ' ' . $user->staffMiddleName,
                                 'email' => $user->staffEmail,
                                 'phone' => $user->staffPhone,
                                 'role' => $user->staffRole,
@@ -189,6 +200,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             break;
 
         case 'PATCH':
+            // TODO split name into 3 columns
             $user = json_decode(file_get_contents('php://input'));
 
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);

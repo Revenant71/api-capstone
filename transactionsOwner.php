@@ -21,7 +21,7 @@ switch ($method){
             DOC.category_id AS DOC_category_id
         FROM transactions TCN
         LEFT JOIN documents DOC ON TCN.id_doc = DOC.id
-        WHERE TCN.name_last_owner LIKE :lastname_owner OR TCN.reference_number LIKE :reference_number
+        WHERE TCN.lastname_owner LIKE :lastname_owner OR TCN.reference_number LIKE :reference_number
         UNION
         SELECT 
             TCN.*, 
@@ -30,7 +30,7 @@ switch ($method){
             DOC.category_id AS DOC_category_id
         FROM transactions TCN
         RIGHT JOIN documents DOC ON TCN.id_doc = DOC.id
-        WHERE TCN.name_last_owner LIKE :lastname_owner OR TCN.reference_number LIKE :reference_number
+        WHERE TCN.lastname_owner LIKE :lastname_owner OR TCN.reference_number LIKE :reference_number
         LIMIT 1;
         ";
         

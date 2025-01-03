@@ -42,7 +42,7 @@ session_start();
                     // login is successful
                     $_SESSION['id_user'] = $found_user['id'];
                     $_SESSION['role_user'] = $found_user['account_type'];
-                    $_SESSION['name_user'] = $found_user['name'];
+                    $_SESSION['name_user'] = $found_user['lastname']. ', '.$found_user['firstname']. ' ' .$found_user['middlename']  ;
                     
                     $response = [
                         'status'=>1,
