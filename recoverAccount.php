@@ -117,7 +117,7 @@ switch ($method) {
 
                     $response = [
                         'status'=>1,
-                        'message'=> 'Found a user account with the given email',
+                        'message'=> 'OTP sent to email.',
                         'otpData'=>[
                             'expiry' => $expiry,
                         ]
