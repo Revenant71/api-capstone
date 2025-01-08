@@ -17,7 +17,7 @@ switch ($method) {
         } else {
             $response = [
                 'statusRole'=>1,
-                'msgRole'=>'USER'
+                'msgRole'=>'STAFF'
             ];
         }
         

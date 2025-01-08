@@ -77,8 +77,6 @@ switch ($method) {
         // TODO encType="multipart/form-data
         $transaction = json_decode(file_get_contents('php://input'), true);
         // TODO check which attributes are empty, do not bind empty attributes
-        //  phone_owner,
-        // :phone_owner,
         // file_portrait,
         // :file_portrait,
         $qy = "
@@ -150,81 +148,80 @@ switch ($method) {
         if ($stmt->execute()) {
             // TODO send total, breakdown, reference number
             // TODO send email not working
-            try {
+            // try {
                 // config
-                $mailRecover = new PHPMailer(true);
-                $mailRecover->Host = MAILHOST;
-                $mailRecover->isSMTP();
-                $mailRecover->SMTPAuth = true;
-                $mailRecover->Username = USERNAME;
-                $mailRecover->Password = PASSWORD;
-                $mailRecover->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
-                $mailRecover->Port = 587;
+                // $mailRecover = new PHPMailer(true);
+                // $mailRecover->Host = MAILHOST;
+                // $mailRecover->isSMTP();
+                // $mailRecover->SMTPAuth = true;
+                // $mailRecover->Username = USERNAME;
+                // $mailRecover->Password = PASSWORD;
+                // $mailRecover->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
+                // $mailRecover->Port = 587;
 
                 // from, to, body
-                $mailRecover->setFrom(SEND_FROM, SEND_FROM_NAME);
-                $mailRecover->addAddress($transaction['email_req']);
-                $mailRecover->addReplyTo(REPLY_TO, REPLY_TO_NAME);
-                $mailRecover->isHTML(true);
-                $mailRecover->Subject = 'Docuquest Request Sent';
+                // $mailRecover->setFrom(SEND_FROM, SEND_FROM_NAME);
+                // $mailRecover->addAddress($transaction['email_req']);
+                // $mailRecover->addReplyTo(REPLY_TO, REPLY_TO_NAME);
+                // $mailRecover->isHTML(true);
+                // $mailRecover->Subject = 'Docuquest Request Sent';
                 // TODO use html table for sales invoice
-                $mailRecover->Body = '
-                    <html>
-                        <head>
-                        <style>
-                            ' . $css . '
-                        </style>
-                        </head>
-                        <body> 
-                            <strong>Reference number:</strong>
-                            <h2>'.$transaction['reference_number'].'</h2>
-                            <br/>
-                            <strong>Document:</strong>
-                            '.$transaction['currentDocument'].'
-                            <br/>
-                            <strong>Quantity:</strong>
-                            '.$transaction['currentQuantity'].'
-                            <br/>
-                            <strong>Price:</strong>
-                            '.$transaction['currentPrice'].'
-                            <br/>
-                            // TODO invoice + html table
+                // $mailRecover->Body = '
+                //     <html>
+                //         <head>
+                //         <style>
+                //             ' . $css . '
+                //         </style>
+                //         </head>
+                //         <body> 
+                //             <strong>Reference number:</strong>
+                //             <h2>'.$transaction['reference_number'].'</h2>
+                //             <br/>
+                //             <strong>Document:</strong>
+                //             '.$transaction['currentDocument'].'
+                //             <br/>
+                //             <strong>Quantity:</strong>
+                //             '.$transaction['currentQuantity'].'
+                //             <br/>
+                //             <strong>Price:</strong>
+                //             '.$transaction['currentPrice'].'
+                //             <br/>
+                //             // TODO invoice + html table
                             
-                            <i>Do not reply to this email.</i>
-                        </body>
-                    </html>
-                ';
-                $mailRecover->AltBody = '
-                    <strong>Reference number:</strong>
-                    <h2>'.$transaction['reference_number'].'</h2>
-                    <br/>
-                    <strong>Document:</strong>
-                    '.$transaction['currentDocument'].'
-                    <br/>
-                    <strong>Quantity:</strong>
-                    '.$transaction['currentQuantity'].'
-                    <br/>
-                    <strong>Price:</strong>
-                    '.$transaction['currentPrice'].'
-                    <br/>            
-                    DO NOT REPLY TO THIS EMAIL.
-                ';
+                //             <i>Do not reply to this email.</i>
+                //         </body>
+                //     </html>
+                // ';
+                // $mailRecover->AltBody = '
+                //     <strong>Reference number:</strong>
+                //     <h2>'.$transaction['reference_number'].'</h2>
+                //     <br/>
+                //     <strong>Document:</strong>
+                //     '.$transaction['currentDocument'].'
+                //     <br/>
+                //     <strong>Quantity:</strong>
+                //     '.$transaction['currentQuantity'].'
+                //     <br/>
+                //     <strong>Price:</strong>
+                //     '.$transaction['currentPrice'].'
+                //     <br/>            
+                //     DO NOT REPLY TO THIS EMAIL.
+                // ';
 
-                if ($mailRecover->send())
-                {
-                    $response = [
-                        'status'=>1,
-                        'message'=> 'Request confirmation email sent!',
-                    ];
-                }
-            } catch (Exception $e) {
+                // if ($mailRecover->send())
+                // {
+                //     $response = [
+                //         'status'=>1,
+                //         'message'=> 'Request confirmation email sent!',
+                //     ];
+                // }
+            // } catch (Exception $e) {
                 // Handle the error
-                $response = [
-                    'status'=>0,
-                    'message'=> "Message could not be sent to user. Mailer Error: {$mailRecover->ErrorInfo}",
-                ];
-            }   
-
+                // $response = [
+                //     'status'=>0,
+                //     'message'=> "Message could not be sent to user. Mailer Error: {$mailRecover->ErrorInfo}",
+                // ];
+            // }   
 
             $response = ['status'=>1, 'message'=>'POST transaction successful.'];
         } else {
