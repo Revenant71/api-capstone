@@ -35,11 +35,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($data->region) && isset($data->fee)) {
         $region = $data->region;
         $fee = $data->fee;
+        $updated_at = date('Y-m-d H:i:s');
 
         try {
-            $qy = "UPDATE shipping_fees SET fee = :fee WHERE region = :region";
+            $qy = "UPDATE shipping_fees SET fee = :fee, updated_at = :updated WHERE region = :region";
             $stmt = $db_connection->prepare($qy);
             $stmt->bindParam(':fee', $fee);
+            $stmt->bindParam(':updated', $updated_at);
             $stmt->bindParam(':region', $region);
             $stmt->execute();
 

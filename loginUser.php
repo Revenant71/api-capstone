@@ -40,6 +40,7 @@ session_start();
                     ];
                 } elseif (password_verify($received_plainPass, $found_user['password']) ){
                     // login is successful
+                    // $_SESSION['status_user'] = $found_user['status'];
                     $_SESSION['id_user'] = $found_user['id'];
                     $_SESSION['role_user'] = $found_user['account_type'];
                     $_SESSION['name_user'] = $found_user['lastname']. ', '.$found_user['firstname']. ' ' .$found_user['middlename']  ;
@@ -49,7 +50,8 @@ session_start();
                         'message'=>'Login staff successful.',
                         'name'=>$_SESSION['name_user'],
                         'id'=>$_SESSION['id_user'],
-                        'role'=>$_SESSION['role_user']
+                        'role'=>$_SESSION['role_user'],
+                        // 'status_user'=>$_SESSION['status_user']
                     ];
                 } else {
                     // password mismatch

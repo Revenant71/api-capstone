@@ -3,7 +3,7 @@ require_once('connectDb.php');
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: *");
-header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
+header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
 
     $db_attempt = new connectDb;
     $db_connection = $db_attempt->connect(); 
@@ -40,20 +40,25 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
         
                 // Validate the data
                 if (isset($data['name'], $data['price'], $data['processing_days'])) {
-                    // SQL query to insert the document into `categories_docs`
+                    // SQL query to insert the document into categories_docs
                     $qy = "INSERT INTO categories_docs(name, price, processing_days, luzon_price, visayas_price, mindanao_price) 
                            VALUES(:name, :price, :processing_days, :luzon_price, :visayas_price, :mindanao_price)";
                     
                     // Prepare the statement
+                    // $data['luzon_price']
+                    // $data['visayas_price']
+                    // $data['mindanao_price']
+                    $empty_int = 0;
+
                     $stmt = $db_connection->prepare($qy);
                     $stmt->bindParam(':name', $data['name']);
                     $stmt->bindParam(':price', $data['price']);
                     $stmt->bindParam(':processing_days', $data['processing_days']);
-                    $stmt->bindParam(':luzon_price', $data['luzon_price']);
-                    $stmt->bindParam(':visayas_price', $data['visayas_price']);
-                    $stmt->bindParam(':mindanao_price', $data['mindanao_price']);
+                    $stmt->bindParam(':luzon_price', $empty_int);
+                    $stmt->bindParam(':visayas_price', $empty_int);
+                    $stmt->bindParam(':mindanao_price', $empty_int);
 
-                    // Execute the query and check for success
+                    // Execute the query and check for success$empty_int
                     if ($stmt->execute()) {
                         // Return success message as a JSON response
                         $response = ['status' => 1, 'message' => "Document added to categories_docs successfully."];
@@ -76,36 +81,49 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             }
             break;
 
-        case 'PATCH':
-            $category = json_decode(file_get_contents('php://input'));
-            $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-            $found_id = $URI_array[3];
-
-            $qy = "UPDATE categories_docs SET name=:name, price=:price, processing_days=:processing, luzon_price=:luzon_price, visayas_price=:visayas_price, mindanao_price=:mindanao_price, updated_at=:updated WHERE id=:id";
-            $stmt = $db_connection->prepare($qy);
+            case 'PATCH':
+                $category = json_decode(file_get_contents('php://input'));
+                $URI_array = explode('/', $_SERVER['REQUEST_URI']);
+                $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
             
-            $updated_at = date('Y-m-d H:i:s');
+                if ($found_id && is_numeric($found_id)) {
+                    // Update query for editing an existing record
+                    $qy = "UPDATE categories_docs SET 
+                               name=:name, 
+                               price=:price, 
+                               processing_days=:processing_days, 
+                               luzon_price=:luzon_price, 
+                               visayas_price=:visayas_price, 
+                               mindanao_price=:mindanao_price, 
+                               updated_at=:updated 
+                           WHERE id=:id";
+                    $stmt = $db_connection->prepare($qy);
+            
+                    $updated_at = date('Y-m-d H:i:s');
+                    $empty_int = 0;
 
-            if ($found_id && is_numeric($found_id)) {
-                $stmt->bindParam(':id', $found_id);
-            }
-
-            $stmt->bindParam(':name', $category->txt_name);  // TODO follow form field name
-            $stmt->bindParam(':price', $category->txt_price);  // TODO follow form field name
-            $stmt->bindParam(':processing_days', $category->txt_processing_days);  // TODO follow form field name
-            $stmt->bindParam(':updated', $updated_at);
-            $stmt->bindParam(':luzon_price', $category->txt_luzon_price);  // TODO follow form field name
-            $stmt->bindParam(':visayas_price', $category->txt_visayas_price);  // TODO follow form field name
-            $stmt->bindParam(':mindanao_price', $category->txt_mindanao_price);  // TODO follow form field name
-
-            if ($stmt->execute()) {
-                $response = ['status'=>1, 'message'=>'PATCH document category successful.'];
-            } else {
-                $response = ['status'=>0, 'message'=>'SORRY, PATCH document category failed.'];
-            }
-
-            echo json_encode($response);
-            break;
+                    // Bind values based on the data received from the frontend
+                    $stmt->bindParam(':id', $found_id);
+                    $stmt->bindParam(':name', $category->name);  
+                    $stmt->bindParam(':price', $category->price);  
+                    $stmt->bindParam(':processing_days', $category->processing_days);  
+                    $stmt->bindParam(':updated', $updated_at);
+                    $stmt->bindParam(':luzon_price', $empty_int);  
+                    $stmt->bindParam(':visayas_price', $empty_int);  
+                    $stmt->bindParam(':mindanao_price', $empty_int);  
+            
+                    if ($stmt->execute()) {
+                        $response = ['status' => 1, 'message' => 'Document category updated successfully.'];
+                    } else {
+                        $response = ['status' => 0, 'message' => 'Failed to update document category.'];
+                    }
+                } else {
+                    $response = ['status' => 0, 'message' => 'Invalid or missing ID for update.'];
+                }
+            
+                echo json_encode($response);
+                break;            
+            
         
         case 'DELETE':
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
@@ -122,6 +140,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             }
             
             echo json_encode($response);
-            break;
+            break;            
+
     }
 ?>

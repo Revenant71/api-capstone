@@ -79,6 +79,8 @@ switch ($method) {
         // TODO check which attributes are empty, do not bind empty attributes
         // file_portrait,
         // :file_portrait,
+        // released_at,
+        // :released_at,
         $qy = "
         INSERT INTO transactions (
             reference_number, service_type, delivery_region,
@@ -111,11 +113,12 @@ switch ($method) {
             ':overdue_days' => 0,
             ':statusPayment' => 'Not Paid',
             ':statusTransit' => 'Request Placed',
+            // ':released_at' => null,
             ':created_at' => date('Y-m-d H:i:s'),
             ':updated_at' => date('Y-m-d H:i:s'),
         ];
 
-        $stmt->execute(array_merge($default_values, [
+        $transaction_values = [
             ':reference_number' => $transaction['reference_number'],
             ':service_type' => $transaction['service_type'],
             ':delivery_region' => $transaction['delivery_region'],
@@ -136,93 +139,16 @@ switch ($method) {
             ':course_year' => $transaction['course_year'],
             ':year_last' => $transaction['year_last'],
             ':purpose_req' => $transaction['purpose'],
-        ]));
+        ];
 
         if (!empty($transaction['desc_req'])) {
-            $execute_values[':desc_req'] = $transaction['desc_req'];
+            $transaction_values[':desc_req'] = $transaction['desc_req'];
         }
         if (!empty($transaction['file_portrait'])) {
-            $execute_values[':file_portrait'] = $transaction['portrait'];
+            $transaction_values[':file_portrait'] = $transaction['portrait'];
         }
 
-        if ($stmt->execute()) {
-            // TODO send total, breakdown, reference number
-            // TODO send email not working
-            // try {
-                // config
-                // $mailRecover = new PHPMailer(true);
-                // $mailRecover->Host = MAILHOST;
-                // $mailRecover->isSMTP();
-                // $mailRecover->SMTPAuth = true;
-                // $mailRecover->Username = USERNAME;
-                // $mailRecover->Password = PASSWORD;
-                // $mailRecover->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
-                // $mailRecover->Port = 587;
-
-                // from, to, body
-                // $mailRecover->setFrom(SEND_FROM, SEND_FROM_NAME);
-                // $mailRecover->addAddress($transaction['email_req']);
-                // $mailRecover->addReplyTo(REPLY_TO, REPLY_TO_NAME);
-                // $mailRecover->isHTML(true);
-                // $mailRecover->Subject = 'Docuquest Request Sent';
-                // TODO use html table for sales invoice
-                // $mailRecover->Body = '
-                //     <html>
-                //         <head>
-                //         <style>
-                //             ' . $css . '
-                //         </style>
-                //         </head>
-                //         <body> 
-                //             <strong>Reference number:</strong>
-                //             <h2>'.$transaction['reference_number'].'</h2>
-                //             <br/>
-                //             <strong>Document:</strong>
-                //             '.$transaction['currentDocument'].'
-                //             <br/>
-                //             <strong>Quantity:</strong>
-                //             '.$transaction['currentQuantity'].'
-                //             <br/>
-                //             <strong>Price:</strong>
-                //             '.$transaction['currentPrice'].'
-                //             <br/>
-                //             // TODO invoice + html table
-                            
-                //             <i>Do not reply to this email.</i>
-                //         </body>
-                //     </html>
-                // ';
-                // $mailRecover->AltBody = '
-                //     <strong>Reference number:</strong>
-                //     <h2>'.$transaction['reference_number'].'</h2>
-                //     <br/>
-                //     <strong>Document:</strong>
-                //     '.$transaction['currentDocument'].'
-                //     <br/>
-                //     <strong>Quantity:</strong>
-                //     '.$transaction['currentQuantity'].'
-                //     <br/>
-                //     <strong>Price:</strong>
-                //     '.$transaction['currentPrice'].'
-                //     <br/>            
-                //     DO NOT REPLY TO THIS EMAIL.
-                // ';
-
-                // if ($mailRecover->send())
-                // {
-                //     $response = [
-                //         'status'=>1,
-                //         'message'=> 'Request confirmation email sent!',
-                //     ];
-                // }
-            // } catch (Exception $e) {
-                // Handle the error
-                // $response = [
-                //     'status'=>0,
-                //     'message'=> "Message could not be sent to user. Mailer Error: {$mailRecover->ErrorInfo}",
-                // ];
-            // }   
-
+        if ($stmt->execute(array_merge($default_values, $transaction_values))) {
             $response = ['status'=>1, 'message'=>'POST transaction successful.'];
         } else {
             $response = ['status'=>0, 'message'=>'SORRY, POST transaction failed.'];
@@ -232,54 +158,157 @@ switch ($method) {
         break;
         
     case 'PATCH':
-        // TODO update queries to match updated transactions table
         $transaction = json_decode(file_get_contents('php://input'), true);
 
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3];
 
+        // " . (!empty($transaction['file_receipt']) ? ", file_receipt" : "") . "
+        // " . (!empty($transaction['file_document']) ? ", file_document" : "") . "
+        // " . (!empty($transaction['file_receipt']) ? ", :file_receipt" : "") . "
+        // " . (!empty($transaction['file_document']) ? ", :file_document" : "") . "
+        
+        // TODO
         $qy = "
-        UPDATE transactions 
-        SET 
-            id_doc = :id_doc, 
-            email_req = :email_req, 
-            id_swu = :id_swu, 
-            name_owner = :name_owner, 
-            course = :course, 
-            purpose_req = :purpose_req, 
-            desc_req = :desc_req, 
-            file_portrait = :file_portrait,
-            statusPayment = :statusPayment, 
-            statusTransit = :statusTransit, 
-            id_employee = :id_employee, 
-            updated_at = :updated_at
-        WHERE reference_number = :reference
+        UPDATE transactions
+        SET
+        service_type = :service_type,
+        delivery_region = :delivery_region,
+        id_doc = :id_doc,
+        doc_name = :doc_name,
+        doc_quantity = :doc_quantity,
+        price = :price,
+        name_req = :name_req,
+        phone_req = :phone_req,
+        email_req = :email_req,
+        id_swu = :id_swu,
+        firstname_owner = :firstname_owner,
+        middlename_owner = :middlename_owner,
+        lastname_owner = :lastname_owner,
+        phone_owner = :phone_owner,
+        course = :course,
+        course_year = :course_year,
+        year_last = :year_last,
+        purpose_req = :purpose_req,
+        statusPayment = :statusPayment,
+        statusTransit = :statusTransit,
+        id_employee = :id_employee,
+        overdue_days = :overdue_days,
+        updated_at = :updated_at
         ";
 
+        if (!empty($transaction['description'])) {
+            $qy .= ", desc_req = :desc_req";
+        }
+        if (!empty($transaction['file_portrait'])) {
+            $qy .= ", file_portrait = :file_portrait";
+        }
+
+        $qy .= " WHERE id = :id";
+
         $stmt = $db_connection->prepare($qy);
-
-        $foundPortrait = $transaction['portrait'];
-
-        // refer to users for patch
-        $stmt->execute([
-            ':reference' => $found_reference_no,
-            ':id_doc' => $transaction['id_doc'],
-            ':email_req' => $transaction['email_req'],
-            ':id_swu' => $transaction['id_swu'],
-            ':name_owner' => $transaction['name_owner'],
-            
-            ':course' => $transaction['course'],
-            ':purpose_req' => $transaction['purpose_req'],
-            ':desc_req' => $transaction['desc_req'],
-
-            ':file_portrait' => $foundPortrait,            
-            ':statusPayment' => $transaction['statusPayment'],
-            ':statusTransit' => $transaction['statusTransit'],
-            ':id_employee' => $transaction['id_employee'],
+        $transaction_values = [
+            ':id' => $transaction['request_id'],
+            ':service_type' => $transaction['service'],
+            ':delivery_region' => $transaction['region'],
+            ':id_doc' => $transaction['doc_id'],
+            ':doc_name' => $transaction['doc_type'],
+            ':doc_quantity' => $transaction['doc_quantity'],
+            ':price' => $transaction['doc_price'],
+            ':name_req' => $transaction['requestor_name'],
+            ':phone_req' => $transaction['requestor_phone'],
+            ':email_req' => $transaction['requestor_email'],
+            ':id_swu' => $transaction['owner_SWU'],
+            ':firstname_owner' => $transaction['owner_firstname'],
+            ':middlename_owner' => $transaction['owner_middlename'],
+            ':lastname_owner' => $transaction['owner_lastname'],
+            ':phone_owner' => $transaction['owner_phone'],
+            ':course' => $transaction['owner_course'],
+            ':course_year' => $transaction['owner_course_year'],
+            ':year_last' => $transaction['owner_year_last'],
+            ':purpose_req' => $transaction['purpose'],
+            ':statusPayment' => $transaction['status_payment'],
+            ':statusTransit' => $transaction['status_transit'],
+            ':id_employee' => $transaction['staff'],
+            ':overdue_days' => $transaction['overdue_days'],
             ':updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        ];
 
-        echo json_encode(["message" => "PATCH successful"]);
+        if (!empty($transaction['description'])) {
+            $transaction_values[':desc_req'] = $transaction['description'];
+        }
+    
+        if (!empty($transaction['file_portrait'])) {
+            $transaction_values[':file_portrait'] = $transaction['file_portrait'];
+        }
+
+        // ignore these foundthings for now
+        // $foundDocument = $transaction['file_document'];
+        // $foundReceipt = $transaction['file_receipt'];
+        // $foundPortrait = $transaction['portrait'];
+
+        if ($stmt->execute($transaction_values)) {
+            try {
+                $mailRespond = new PHPMailer(true);
+                $mailRespond->Host = MAILHOST;
+                $mailRespond->isSMTP();
+                $mailRespond->SMTPAuth = true;
+                $mailRespond->Username = USERNAME;
+                $mailRespond->Password = PASSWORD;
+                $mailRespond->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
+                $mailRespond->Port = 587;
+
+                // from, to, body
+                $mailRespond->setFrom(SEND_FROM, SEND_FROM_NAME);
+                $mailRespond->addAddress($transaction['requestor_email']);
+                $mailRespond->addReplyTo(REPLY_TO, REPLY_TO_NAME);
+                $mailRespond->isHTML(true);
+                $mailRespond->Subject = $transaction['reference'] . ' DocuQuest Update';
+                // TODO send total, invoice/breakdown using html table
+                $mailRespond->Body = '
+                <html>
+                    <head>
+                    <style>
+                        ' . $css . '
+                    </style>
+                    </head>
+                    <body> 
+                        <strong>Your request '.$transaction['reference'].' is: '. $transaction['status_transit'] .'.</strong>
+                        <br/>
+                        
+                        
+                        
+                        <p>This is an official sales invoice.</p>
+                        <br/>
+                        <i>Please do not reply to this email.</i>
+                    </body>
+                </html>
+                ';
+                $mailRespond->AltBody = '
+                    <strong>Your request '.$transaction['reference'].' is: '. $transaction['status_transit'] .'.</strong>
+
+
+                    This is an official sales invoice.
+
+                    PLEASE DO NOT REPLY TO THIS EMAIL.
+                ';
+
+                if($mailRespond->send()){
+                    $response = ['status'=>1, 'message'=>'PATCH transaction successful.'];
+                }
+
+            } catch (Exception $e) {
+                $response = [
+                    'status'=>0,
+                    'message'=> "Message could not be sent to user. Mailer Error: {$mailRespond->ErrorInfo}",
+                ];
+            }
+
+        } else {
+            $response = ['status'=>0, 'message'=>'Sorry, PATCH transaction failed.'];
+        }
+
+        echo json_encode($response);
         break;
 
     case 'DELETE':

@@ -12,6 +12,8 @@ $db_connection = $db_attempt->connect();
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'POST':
+        $user = json_decode(file_get_contents(filename: 'php://input'));
+        
         if(!isset($_SESSION['id_user'])){
             $response = [
                 'statusAuth'=>0,
