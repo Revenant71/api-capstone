@@ -37,7 +37,7 @@ switch ($method){
                 $stmt->bindParam(':lastname_owner', $found_lastname, PDO::PARAM_STR);
                 $stmt->execute();
     
-                $data = $stmt->fetch(PDO::FETCH_ASSOC);
+                $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
                 if ($data) {
                     // Return data for given reference number and last name
@@ -85,7 +85,7 @@ switch ($method){
                 $stmt->bindParam(':lastname_owner', $found_owner, PDO::PARAM_STR);
                 $stmt->execute();
                 
-                $data = $stmt->fetch(PDO::FETCH_ASSOC);
+                $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
                 if ($data) {
                     echo json_encode($data); // Return found data

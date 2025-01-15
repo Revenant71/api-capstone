@@ -60,6 +60,8 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
 
                     // Execute the query and check for success$empty_int
                     if ($stmt->execute()) {
+                        // TODO use phpmail email current admin
+
                         // Return success message as a JSON response
                         $response = ['status' => 1, 'message' => "Document added to categories_docs successfully."];
                     } else {

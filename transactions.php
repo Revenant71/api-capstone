@@ -76,33 +76,44 @@ switch ($method) {
     case 'POST':
         // TODO encType="multipart/form-data
         $transaction = json_decode(file_get_contents('php://input'), true);
-        // TODO check which attributes are empty, do not bind empty attributes
         // file_portrait,
         // :file_portrait,
         // released_at,
         // :released_at,
+        $selectedDocsJson = !empty($transaction['selectedDocuments']) ? json_encode($transaction['selectedDocuments']) : '[]';
+
         $qy = "
         INSERT INTO transactions (
             reference_number, service_type, delivery_region,
             id_doc, doc_name, doc_quantity, price, price_total, 
             name_req, phone_req, email_req, 
-            id_swu, firstname_owner, middlename_owner, lastname_owner, phone_owner,
+            firstname_owner, lastname_owner, phone_owner,
             course, course_year, year_last,
-            purpose_req,
+            purpose_req, selected_docs,
             statusPayment, statusTransit, id_employee, overdue_days, 
             created_at, updated_at
+            " . (!empty($transaction['name_middle']) ? ", middlename_owner" : "") . "
+            " . (!empty($transaction['id_swu']) ? ", id_swu" : "") . "
             " . (!empty($transaction['desc_req']) ? ", desc_req" : "") . "
+            " . (!empty($transaction['delivery_city']) ? ", delivery_city" : "") . "
+            " . (!empty($transaction['delivery_district']) ? ", delivery_district" : "") . "
+            " . (!empty($transaction['delivery_street']) ? ", delivery_street" : "") . "
             " . (!empty($transaction['file_portrait']) ? ", file_portrait" : "") . "
         ) VALUES (
             :reference_number, :service_type, :delivery_region,
             :id_doc, :doc_name, :doc_quantity, :price, :price_total, 
             :name_req, :phone_req, :email_req,
-            :id_swu, :firstname_owner, :middlename_owner, :lastname_owner, :phone_owner, 
+            :firstname_owner, :lastname_owner, :phone_owner, 
             :course, :course_year, :year_last, 
-            :purpose_req, 
+            :purpose_req, :selected_docs,
             :statusPayment, :statusTransit, :id_employee, :overdue_days, 
             :created_at, :updated_at
+            " . (!empty($transaction['name_middle']) ? ", :middlename_owner" : "") . "
+            " . (!empty($transaction['id_swu']) ? ", :id_swu" : "") . "
             " . (!empty($transaction['desc_req']) ? ", :desc_req" : "") . "
+            " . (!empty($transaction['delivery_city']) ? ", :delivery_city" : "") . "
+            " . (!empty($transaction['delivery_district']) ? ", :delivery_district" : "") . "
+            " . (!empty($transaction['delivery_street']) ? ", :delivery_street" : "") . "
             " . (!empty($transaction['file_portrait']) ? ", :file_portrait" : "") . "
         )";
 
@@ -117,7 +128,8 @@ switch ($method) {
             ':created_at' => date('Y-m-d H:i:s'),
             ':updated_at' => date('Y-m-d H:i:s'),
         ];
-
+        // $transaction['selectedDocuments']
+        
         $transaction_values = [
             ':reference_number' => $transaction['reference_number'],
             ':service_type' => $transaction['service_type'],
@@ -130,23 +142,38 @@ switch ($method) {
             ':name_req' => $transaction['name_req'],
             ':phone_req' => $transaction['phone_req'],
             ':email_req' => $transaction['email_req'],
-            ':id_swu' => $transaction['id_swu'],
             ':firstname_owner' => $transaction['name_first'],
-            ':middlename_owner' => $transaction['name_middle'],
             ':lastname_owner' => $transaction['name_last'],
             ':phone_owner' => $transaction['phone_owner'],
             ':course' => $transaction['course'],
             ':course_year' => $transaction['course_year'],
             ':year_last' => $transaction['year_last'],
             ':purpose_req' => $transaction['purpose'],
+            ':selected_docs' => $selectedDocsJson
         ];
 
+        if (!empty($transaction['name_middle'])) {
+            $transaction_values[':middlename_owner'] = $transaction['name_middle'];
+        } 
+        if (!empty($transaction['id_swu'])) {
+            $transaction_values[':id_swu'] = $transaction['id_swu'];
+        } 
         if (!empty($transaction['desc_req'])) {
             $transaction_values[':desc_req'] = $transaction['desc_req'];
         }
+        if (!empty($transaction['delivery_city'])) {
+            $transaction_values[':delivery_city'] = $transaction['delivery_city'];
+        } 
+        if (!empty($transaction['delivery_district'])) {
+            $transaction_values[':delivery_district'] = $transaction['delivery_district'];
+        }
+        if (!empty($transaction['delivery_street'])) {
+            $transaction_values[':delivery_street'] = $transaction['delivery_street'];
+        }  
         if (!empty($transaction['file_portrait'])) {
             $transaction_values[':file_portrait'] = $transaction['portrait'];
         }
+
 
         if ($stmt->execute(array_merge($default_values, $transaction_values))) {
             $response = ['status'=>1, 'message'=>'POST transaction successful.'];
@@ -197,6 +224,7 @@ switch ($method) {
         updated_at = :updated_at
         ";
 
+        // TODO follow conditional above for !empty
         if (!empty($transaction['description'])) {
             $qy .= ", desc_req = :desc_req";
         }

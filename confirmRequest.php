@@ -20,9 +20,16 @@ switch ($method) {
     case 'POST':
         $data = json_decode(file_get_contents('php://input'), true);
 
-        // recieve array
-        if (isset($data['displayRefNumbers']) && is_array($data['displayRefNumbers'])) {
-            $displayRefNumbers = $data['displayRefNumbers'];
+        if (empty($data['reference']) || empty($data['email_req']) || empty($data['name_req'])) {
+            echo json_encode([
+                'status' => 0,
+                'message' => 'Missing required fields: reference, emai-l_req, or name_req.',
+            ]);
+            exit;
+        }
+
+        if (isset($data['reference'])) {
+            $display_reference = $data['reference'];
             
             try {
                 // config
@@ -52,9 +59,9 @@ switch ($method) {
                             <p>Hi, '.$data['name_req'].'.</p>
                             <br/>
                             <p>Your requests have been submitted.</p>
-                            <p><em>Use the reference numbers below to track them on DocuQuest</em></p>
+                            <p><em>Use the reference number below to track them on DocuQuest</em></p>
                             <ul>
-                                ' . implode('', array_map(fn($ref) => "<li><strong>$ref</strong></li>", $displayRefNumbers)) . '
+                             <li> '.$display_reference.' </li>
                             </ul>
                             <br/>
                             <h3>Modes&nbsp;of&nbsp;Payment</h3>
@@ -92,7 +99,7 @@ switch ($method) {
                                     <li>
                                     GCASH
                                         <ol type="A">
-                                          <li>OVER THE COUNTER- TRANSACT IN PAY BILLS ;<br/> BILLER NAME - PHINMA EDUCATION OR PHINMA SOUTHWESTERN UNIVERSITY</li>
+                                          <li>TRANSACT IN PAY BILLS ;<br/> BILLER NAME - PHINMA EDUCATION OR PHINMA SOUTHWESTERN UNIVERSITY</li>
                                           <p>IF ID NUMBER DOES NOT START WITH "05-" , PLEASE INDICATE "05-" BEFORE THE ID NUMBER</p>
                                         </ol>
                                     </li>
@@ -118,9 +125,9 @@ switch ($method) {
                 Hi, {$data['name_req']},
                 
                 Your requests have been submitted.
-                Use the reference numbers below to track them on DocuQuest:
+                Use the reference number below to track them on DocuQuest:
                 
-                - " . implode("\n- ", $displayRefNumbers) . "
+                {$display_reference}
                 
                 MODES OF PAYMENT:
                 ON-SITE:
@@ -165,7 +172,7 @@ switch ($method) {
                     $response = [
                         'status' => '1',
                         'message' => 'Reference numbers emailed successfully',
-                        'receivedNumbers' => $displayRefNumbers,
+                        'receivedNumbers' => $display_reference,
                     ];
                 }
             } catch(Exception $e) {
