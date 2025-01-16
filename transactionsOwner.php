@@ -20,6 +20,7 @@ switch ($method){
         $found_lastname = isset($_GET['trackingName']) ? $_GET['trackingName'] : null;
     
         if ($found_reference_no && $found_lastname) {
+            // AND TCN.statusPayment = 'Not Paid';
             $qy = "
             SELECT 
                 TCN.*, 
@@ -29,6 +30,7 @@ switch ($method){
             FROM transactions TCN
             LEFT JOIN documents DOC ON TCN.id_doc = DOC.id
             WHERE TCN.reference_number = :reference AND TCN.lastname_owner = :lastname_owner;
+            
             ";
     
             try {
@@ -45,7 +47,7 @@ switch ($method){
                 } else {
                     echo json_encode([
                         'status' => 0,
-                        'message' => 'No matching transaction found.',
+                        'message' => 'No matching transactions found.',
                         'refnumber' => $found_reference_no,
                         'lastname' => $found_lastname
                     ]);
