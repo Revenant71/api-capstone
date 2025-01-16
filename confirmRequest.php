@@ -23,7 +23,7 @@ switch ($method) {
         if (empty($data['reference']) || empty($data['email_req']) || empty($data['name_req'])) {
             echo json_encode([
                 'status' => 0,
-                'message' => 'Missing required fields: reference, emai-l_req, or name_req.',
+                'message' => 'Missing required fields: reference, email_req, or name_req.',
             ]);
             exit;
         }
@@ -33,22 +33,22 @@ switch ($method) {
             
             try {
                 // config
-                $mailRecover = new PHPMailer(true);
-                $mailRecover->Host = MAILHOST;
-                $mailRecover->isSMTP();
-                $mailRecover->SMTPAuth = true;
-                $mailRecover->Username = USERNAME;
-                $mailRecover->Password = PASSWORD;
-                $mailRecover->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
-                $mailRecover->Port = 587;
+                $mailRequest = new PHPMailer(true);
+                $mailRequest->Host = MAILHOST;
+                $mailRequest->isSMTP();
+                $mailRequest->SMTPAuth = true;
+                $mailRequest->Username = USERNAME;
+                $mailRequest->Password = PASSWORD;
+                $mailRequest->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
+                $mailRequest->Port = 587;
 
                 // from, to, body
-                $mailRecover->setFrom(SEND_FROM, SEND_FROM_NAME);
-                $mailRecover->addAddress($data['email_req']);
-                $mailRecover->addReplyTo(REPLY_TO, REPLY_TO_NAME);
-                $mailRecover->isHTML(true);
-                $mailRecover->Subject = 'Document Request Confirmation';
-                $mailRecover->Body = '
+                $mailRequest->setFrom(SEND_FROM, SEND_FROM_NAME);
+                $mailRequest->addAddress($data['email_req']);
+                $mailRequest->addReplyTo(REPLY_TO, REPLY_TO_NAME);
+                $mailRequest->isHTML(true);
+                $mailRequest->Subject = 'Document Request Confirmation';
+                $mailRequest->Body = '
                     <html>
                         <head>
                         <style>
@@ -121,7 +121,7 @@ switch ($method) {
                     </html>      
                 ';
 
-                $mailRecover->AltBody = "
+                $mailRequest->AltBody = "
                 Hi, {$data['name_req']},
                 
                 Your requests have been submitted.
@@ -167,7 +167,7 @@ switch ($method) {
                 This is an auto-generated email. Please do not reply.
                 ";
                 
-                if ($mailRecover->send())
+                if ($mailRequest->send())
                 {
                     $response = [
                         'status' => '1',
@@ -178,13 +178,13 @@ switch ($method) {
             } catch(Exception $e) {
                 $response = [
                     'status'=>0,
-                    'message'=> "Email could not be sent to requestor. Mailer Error: {$mailRecover->ErrorInfo}",
+                    'message'=> "Email could not be sent to requestor. Mailer Error: {$mailRequest->ErrorInfo}",
                 ];
             }
         } else {
             $response = [
                 'status' => '0',
-                'message' => 'Invalid data format or missing displayRefNumbers',
+                'message' => 'Invalid data format or missing $display_reference',
             ];
         }
         

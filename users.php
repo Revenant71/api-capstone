@@ -144,9 +144,10 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                                 <br/>
                                 <p>Your account has been created.</p>
                                 <em>Below are your credentials for your reference.</em>
-                                <h2>Username: '.$user->staffLastName.', '.$user->staffFirstName.' '.$user->staffMiddleName.'</h2> 
-                                <h2>Email: '.$user->staffEmail.'</h2>
+                                <h2>Username: '.$user->staffEmail.'</h2>
                                 <h2>Password: '.$user->staffPass.'</h2>       
+                                <br/>
+                                <strong>You are advised to change your password within 24 hours of receiving this message.</strong>
                                 <br/>
                                 <p>To login and activate your account,</p>
                                 <p>please proceed to <a href="http://localhost:3000/login" target="_blank" title="Click here to login and activate your account.">this link</a></p>
@@ -158,10 +159,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                         <strong>Hi '.$user->staffFirstName.', Welcome to DocuQuest!</strong>
                         <br/>
                         <p>Your account has been created.</p>
-                        <em>Below are your credentials for your reference.</em>
-                        <h2>Username: '.$user->staffLastName.', '.$user->staffFirstName.' '.$user->staffMiddleName.'</h2>   
-                        <h2>Email: '.$user->staffEmail.'</h2>
+                        <em>Below are your credentials for your reference.</em>   
+                        <h2>Username: '.$user->staffEmail.'</h2>
                         <h2>Password: '.$user->staffPass.'</h2>
+                        <br/>
+                        <strong>You are advised to change your password within 24 hours of receiving this message.</strong>
                         <br/>  
                         <p>To login and activate your account,</p>
                         <p>please proceed to <a href="http://localhost:3000/login" target="_blank" title="Click here to login and activate your account.">this link</a></p>
