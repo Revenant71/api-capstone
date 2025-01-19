@@ -9,6 +9,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH");
 $db_attempt = new connectDb;
 $db_connection = $db_attempt->connect();
 
+// TODO
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
