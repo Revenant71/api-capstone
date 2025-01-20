@@ -7,7 +7,7 @@ use PHPMailer\PHPMailer\Exception;
 use PHPMailer\PHPMailer\SMTP;
 use OTPHP\TOTP;
 header("Access-Control-Allow-Origin: http://localhost:3000");
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Headers: *");
 header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
@@ -68,8 +68,21 @@ switch ($method) {
             $stmt = $db_connection->prepare($qy);
             $stmt->execute();
             $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // compress longblob data to base64 string
+            foreach ($data as &$row) {
+                if (isset($row['file_receipt'])) {
+                    $row['file_receipt'] = base64_encode($row['file_receipt']);
+                }
+            }
+
+            // file_put_contents('debugTransactions.log', 'Fetched data: ' . print_r($data, true) . PHP_EOL, FILE_APPEND);
+            // if (json_last_error() !== JSON_ERROR_NONE) {
+            //     file_put_contents('debugTransactionsEncode.log', 'JSON encoding error: ' . json_last_error_msg() . PHP_EOL, FILE_APPEND);
+            // }
         }
 
+        // ob_clean();
         echo json_encode($data);
         break;
         

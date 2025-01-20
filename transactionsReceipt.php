@@ -4,7 +4,7 @@ require_once('connectDb.php');
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-header("Access-Control-Allow-Methods: GET, POST, PATCH");
+header("Access-Control-Allow-Methods: GET, POST ");
 
 $db_attempt = new connectDb;
 $db_connection = $db_attempt->connect();
@@ -17,10 +17,10 @@ switch ($method) {
 
         break;
 
-    case 'PATCH':
-        $file = $_FILES['file_receipt']; // Access the uploaded file
-        $refNumber = $_POST['refNumber'];
-        $trackingName = $_POST['trackingName'];
+    case 'POST':
+        $file = $_FILES['file_receipt'] ?? null; // Access the uploaded file
+        $refNumber = $_POST['refNumber'] ?? null;
+        $trackingName = $_POST['trackingName'] ?? null;
 
         if (!$refNumber) {
             echo json_encode(['success' => false, 'message' => 'Reference number is required.']);
@@ -39,6 +39,11 @@ switch ($method) {
         //     exit;
         // }
         
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            echo json_encode(['success' => false, 'message' => 'File upload failed.']);
+            exit;
+        }
+
         if ($file['error'] === UPLOAD_ERR_OK) {
           // Read the file content as binary
           $fileContent = file_get_contents($file['tmp_name']);
