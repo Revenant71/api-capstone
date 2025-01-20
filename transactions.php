@@ -46,6 +46,11 @@ switch ($method) {
             $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
             $stmt->execute();
             $data = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            // compress longblob data to base64 string
+            if ($data && isset($data['file_receipt'])) {
+                $data['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($data['file_receipt']);
+            }
         } else {
             $qy = "
             SELECT 

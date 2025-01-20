@@ -40,9 +40,14 @@ switch ($method){
                 $stmt->execute();
     
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
                 if ($data) {
-                    // Return data for given reference number and last name
+                    foreach ($data as &$row) {
+                        if (isset($row['file_receipt'])) {
+                            $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
+                        }
+                    }
+
                     echo json_encode($data);
                 } else {
                     echo json_encode([
@@ -90,6 +95,13 @@ switch ($method){
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
                 if ($data) {
+                    // Convert longblob to Base64
+                    foreach ($data as &$row) {
+                        if (isset($row['file_receipt'])) {
+                            $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
+                        }
+                    }
+
                     echo json_encode($data); // Return found data
                 } else {
                     echo json_encode(['status' => 0, 'message' => 'No matching transaction found.']);
