@@ -49,7 +49,9 @@ switch ($method) {
 
             // compress longblob data to base64 string
             if ($data && isset($data['file_receipt'])) {
+                // TODO this will not work if the image is png and has transparency
                 $data['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($data['file_receipt']);
+                
             }
         } else {
             $qy = "
@@ -208,65 +210,85 @@ switch ($method) {
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3];
 
+        if (!$found_reference_no || empty($transaction['owner_lastname'])) {
+            echo json_encode(['status' => 0, 'message' => 'Invalid reference number or owner lastname']);
+            exit;
+        }
+
         // " . (!empty($transaction['file_receipt']) ? ", file_receipt" : "") . "
         // " . (!empty($transaction['file_document']) ? ", file_document" : "") . "
         // " . (!empty($transaction['file_receipt']) ? ", :file_receipt" : "") . "
         // " . (!empty($transaction['file_document']) ? ", :file_document" : "") . "
         
-        // TODO
         $qy = "
         UPDATE transactions
         SET
-        service_type = :service_type,
-        delivery_region = :delivery_region,
-        id_doc = :id_doc,
-        doc_name = :doc_name,
-        doc_quantity = :doc_quantity,
-        price = :price,
-        name_req = :name_req,
-        phone_req = :phone_req,
-        email_req = :email_req,
-        id_swu = :id_swu,
-        firstname_owner = :firstname_owner,
-        middlename_owner = :middlename_owner,
-        lastname_owner = :lastname_owner,
-        phone_owner = :phone_owner,
-        course = :course,
-        course_year = :course_year,
-        year_last = :year_last,
-        purpose_req = :purpose_req,
-        statusPayment = :statusPayment,
-        statusTransit = :statusTransit,
-        id_employee = :id_employee,
-        overdue_days = :overdue_days,
-        updated_at = :updated_at
+            service_type = :service_type,
+            delivery_region = :delivery_region,
+            id_doc = :id_doc,
+            doc_name = :doc_name,
+            doc_quantity = :doc_quantity,
+            price = :price,
+            price_total = :price_total,
+            name_req = :name_req,
+            phone_req = :phone_req,
+            email_req = :email_req,
+            firstname_owner = :firstname_owner,
+            lastname_owner = :lastname_owner,
+            phone_owner = :phone_owner,
+            course = :course,
+            course_year = :course_year,
+            year_last = :year_last,
+            purpose_req = :purpose_req,
+            statusPayment = :statusPayment,
+            statusTransit = :statusTransit,
+            id_employee = :id_employee,
+            overdue_days = :overdue_days,
+            updated_at = :updated_at
         ";
 
-        // TODO follow conditional above for !empty
+        if (!empty($transaction['owner_middlename'])) {
+            $qy .= ", middlename_owner = :middlename_owner";
+        }
+        if (!empty($transaction['owner_SWU'])) {
+            $qy .= ", id_swu = :id_swu";
+        }
         if (!empty($transaction['description'])) {
             $qy .= ", desc_req = :desc_req";
+        }
+        if (!empty($transaction['delivery_city'])) {
+            $qy .= ", delivery_city = :delivery_city";
+        }
+        if (!empty($transaction['delivery_district'])) {
+            $qy .= ", delivery_district = :delivery_district";
+        }
+        if (!empty($transaction['delivery_street'])) {
+            $qy .= ", delivery_street = :delivery_street";
         }
         if (!empty($transaction['file_portrait'])) {
             $qy .= ", file_portrait = :file_portrait";
         }
+        if (!empty($transaction['file_receipt'])) {
+            $qy .= ", file_receipt = :file_receipt";
+        }
 
-        $qy .= " WHERE id = :id";
+        $qy .= " WHERE reference_number = :reference_number AND lastname_owner = :lastname_owner";
 
         $stmt = $db_connection->prepare($qy);
+
         $transaction_values = [
-            ':id' => $transaction['request_id'],
+            ':reference_number' => $found_reference_no,
             ':service_type' => $transaction['service'],
             ':delivery_region' => $transaction['region'],
             ':id_doc' => $transaction['doc_id'],
             ':doc_name' => $transaction['doc_type'],
             ':doc_quantity' => $transaction['doc_quantity'],
             ':price' => $transaction['doc_price'],
+            ':price_total' => $transaction['total_price'],
             ':name_req' => $transaction['requestor_name'],
             ':phone_req' => $transaction['requestor_phone'],
             ':email_req' => $transaction['requestor_email'],
-            ':id_swu' => $transaction['owner_SWU'],
             ':firstname_owner' => $transaction['owner_firstname'],
-            ':middlename_owner' => $transaction['owner_middlename'],
             ':lastname_owner' => $transaction['owner_lastname'],
             ':phone_owner' => $transaction['owner_phone'],
             ':course' => $transaction['owner_course'],
@@ -280,18 +302,24 @@ switch ($method) {
             ':updated_at' => date('Y-m-d H:i:s'),
         ];
 
+        if (!empty($transaction['file_receipt'])) {
+            $transaction_values[':file_receipt'] = base64_decode($transaction['file_receipt']);
+        }
         if (!empty($transaction['description'])) {
             $transaction_values[':desc_req'] = $transaction['description'];
         }
-    
-        if (!empty($transaction['file_portrait'])) {
-            $transaction_values[':file_portrait'] = $transaction['file_portrait'];
+        if (!empty($transaction['delivery_city'])) {
+            $transaction_values[':delivery_city'] = $transaction['delivery_city'];
         }
-
-        // ignore these foundthings for now
-        // $foundDocument = $transaction['file_document'];
-        // $foundReceipt = $transaction['file_receipt'];
-        // $foundPortrait = $transaction['portrait'];
+        if (!empty($transaction['delivery_district'])) {
+            $transaction_values[':delivery_district'] = $transaction['delivery_district'];
+        }
+        if (!empty($transaction['delivery_street'])) {
+            $transaction_values[':delivery_street'] = $transaction['delivery_street'];
+        }
+        if (!empty($transaction['file_portrait'])) {
+            $transaction_values[':file_portrait'] = base64_decode($transaction['file_portrait']);
+        }
 
         if ($stmt->execute($transaction_values)) {
             try {
@@ -304,13 +332,56 @@ switch ($method) {
                 $mailRespond->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
                 $mailRespond->Port = 587;
 
+                $selectedDocsRows = '';
+                if (!empty($transaction['selected_docs']) && is_array($transaction['selected_docs'])) {
+                    foreach ($transaction['selected_docs'] as $doc) {
+                        $document = htmlspecialchars($doc['document']);
+                        $quantity = htmlspecialchars($doc['quantity']);
+                        $price = htmlspecialchars(number_format($doc['price'], 2));
+                        $totalPrice = htmlspecialchars(number_format($doc['totalPrice'], 2));
+                        $selectedDocsRows .= "
+                        <tr>
+                            <td style='border: 1px solid #ddd; padding: 8px;'>{$document}</td>
+                            <td style='border: 1px solid #ddd; padding: 8px;'>{$quantity}</td>
+                            <td style='border: 1px solid #ddd; padding: 8px;'>{$price}</td>
+                            <td style='border: 1px solid #ddd; padding: 8px;'>{$totalPrice}</td>
+                        </tr>";
+                    }
+                } else {
+                    $selectedDocsRows = '<tr><td colspan="4">No documents selected.</td></tr>';
+                }
+
+                // Add the final total row
+                $selectedDocsRows .= "
+                <tr>
+                    <td colspan='3' style='border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;'>Total:</td>
+                    <td style='border: 1px solid #ddd; padding: 8px; font-weight: bold;'>". htmlspecialchars(number_format($transaction['total_price'], 2)) ."</td>
+                </tr>";
+
+                // HTML table for selected documents
+                $selectedDocsTable = "
+                <table style='border-collapse: collapse; width: 100%;'>
+                    <thead>
+                        <tr>
+                            <th style='border: 1px solid #ddd; padding: 8px;'>Document</th>
+                            <th style='border: 1px solid #ddd; padding: 8px;'>Quantity</th>
+                            <th style='border: 1px solid #ddd; padding: 8px;'>Price</th>
+                            <th style='border: 1px solid #ddd; padding: 8px;'></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {$selectedDocsRows}
+                    </tbody>
+                </table>";
+
                 // from, to, body
                 $mailRespond->setFrom(SEND_FROM, SEND_FROM_NAME);
                 $mailRespond->addAddress($transaction['requestor_email']);
                 $mailRespond->addReplyTo(REPLY_TO, REPLY_TO_NAME);
                 $mailRespond->isHTML(true);
                 $mailRespond->Subject = $transaction['reference'] . ' DocuQuest Update';
-                // TODO send total, invoice/breakdown using html table
+                // TODO only show invoice if $transaction['status_transit'] === Accepted
+                // TODO if $transaction['status_transit'] === Rejected show remarks
                 $mailRespond->Body = '
                 <html>
                     <head>
@@ -320,11 +391,9 @@ switch ($method) {
                     </head>
                     <body> 
                         <strong>Your request '.$transaction['reference'].' is: '. $transaction['status_transit'] .'.</strong>
-                        <br/>
-                        
-                        
-                        
+                        <br/><br/>
                         <p>This is an official sales invoice.</p>
+                        ' . $selectedDocsTable . '
                         <br/>
                         <i>Please do not reply to this email.</i>
                     </body>
