@@ -42,7 +42,7 @@ switch ($method){
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 if ($data) {
-                    // FIXME foreach not working
+                    // FIXME foreach not working, duplicate prefix
                     foreach ($data as &$row) {
                         if (isset($row['file_receipt'])) {
                             // Remove any incorrect or extra prefix if it exists
@@ -60,7 +60,6 @@ switch ($method){
                             }
                         }
                     }
-                    
                     
                     // foreach ($data as &$row) {
                     //     if (isset($row['file_receipt'])) {

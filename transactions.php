@@ -264,12 +264,12 @@ switch ($method) {
         if (!empty($transaction['delivery_street'])) {
             $qy .= ", delivery_street = :delivery_street";
         }
-        if (!empty($transaction['file_receipt'])) {
-            $qy .= ", file_receipt = :file_receipt";
-        }
-        if (!empty($transaction['file_portrait'])) {
-            $qy .= ", file_portrait = :file_portrait";
-        }
+        // if (!empty($transaction['file_receipt'])) {
+        //     $qy .= ", file_receipt = :file_receipt";
+        // }
+        // if (!empty($transaction['file_portrait'])) {
+        //     $qy .= ", file_portrait = :file_portrait";
+        // }
 
 
         $qy .= " WHERE reference_number = :reference_number AND lastname_owner = :lastname_owner";
@@ -319,12 +319,12 @@ switch ($method) {
         if (!empty($transaction['delivery_street'])) {
             $transaction_values[':delivery_street'] = $transaction['delivery_street'];
         }
-        if (!empty($transaction['file_receipt'])) {
-            $transaction_values[':file_receipt'] = base64_decode($transaction['file_receipt']);
-        }
-        if (!empty($transaction['file_portrait'])) {
-            $transaction_values[':file_portrait'] = base64_decode($transaction['file_portrait']);
-        }
+        // if (!empty($transaction['file_receipt'])) {
+        //     $transaction_values[':file_receipt'] = base64_decode($transaction['file_receipt']);
+        // }
+        // if (!empty($transaction['file_portrait'])) {
+        //     $transaction_values[':file_portrait'] = base64_decode($transaction['file_portrait']);
+        // }
 
         if ($stmt->execute($transaction_values)) {
             // try {

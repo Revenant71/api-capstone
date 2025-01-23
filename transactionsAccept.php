@@ -182,7 +182,9 @@ switch ($method){
                         ' . $css . '
                     </style>
                     </head>
-                    <body> 
+                    <body>
+                        <p>Hi, '. $transaction['owner_firstname'] .'.</p>
+                        <br/>
                         <strong>Your request '.$transaction['reference'].' is: '. $transaction['status_transit'] .'.</strong>
                         <br/><br/>
                         <p>This is an official sales invoice.</p>
@@ -190,12 +192,17 @@ switch ($method){
                         <br/><br/>
                         ' . $selectedDocsTable . '
                         <br/>
+                        <p>Kindly pay the amoount due if you have not paid yet and upload your finance receipt as soon as possible.</p>
+                        <br/>
                         <i>Please do not reply to this email.</i>
                     </body>
                 </html>
                 ';
 
-                $mailAccept->AltBody = 'Your request ' . $transaction['reference'] . ' is: ' . $transaction['status_transit'] . '. 
+                $mailAccept->AltBody = '
+                Hi, '. $transaction['owner_firstname'] .'.
+
+                Your request ' . $transaction['reference'] . ' is: ' . $transaction['status_transit'] . '. 
 
                 This is an official sales invoice.
 
@@ -204,6 +211,8 @@ switch ($method){
 
                 Document Details:
                 ' . strip_tags($selectedDocsTable) . '
+
+                Kindly pay the amoount due if you have not paid yet and upload your finance receipt as soon as possible.
 
                 PLEASE DO NOT REPLY TO THIS EMAIL.';
 
