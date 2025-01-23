@@ -10,7 +10,7 @@ $db_connection = $db_attempt->connect();
 
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method){
-    case 'GET': // FIX: Parse the URI to separate query parameters
+    case 'GET':
         $parsed_url = parse_url($_SERVER['REQUEST_URI']); // Parse the URL
         $path = $parsed_url['path']; // Extract the path part
         $URI_array = explode('/', $path); // Split the path into parts
@@ -42,12 +42,32 @@ switch ($method){
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 if ($data) {
+                    // FIXME foreach not working
                     foreach ($data as &$row) {
                         if (isset($row['file_receipt'])) {
-                            $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
+                            // Remove any incorrect or extra prefix if it exists
+                            $row['file_receipt'] = preg_replace('/^(dataimage\/jpegbase64,|data:image\/jpeg;base64,)/', '', $row['file_receipt']);
+                    
+                            // Ensure the value is properly base64 encoded
+                            $decoded = base64_decode($row['file_receipt'], true);
+                    
+                            if ($decoded !== false) {
+                                // Re-encode and prepend the correct prefix
+                                $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($decoded);
+                            } else {
+                                // If decoding fails, encode the raw value
+                                $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
+                            }
                         }
                     }
-
+                    
+                    
+                    // foreach ($data as &$row) {
+                    //     if (isset($row['file_receipt'])) {
+                    //         $row['file_receipt'] = base64_encode($row['file_receipt']);
+                    //     }
+                    // }
+                    
                     echo json_encode($data);
                 } else {
                     echo json_encode([
@@ -98,9 +118,18 @@ switch ($method){
                     // Convert longblob to Base64
                     foreach ($data as &$row) {
                         if (isset($row['file_receipt'])) {
-                            $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
+                            // Check if the prefix is incorrect
+                            if (str_starts_with($row['file_receipt'], 'dataimage/jpegbase64')) {
+                                // Replace the incorrect prefix with the correct one
+                                $row['file_receipt'] = str_replace('dataimage/jpegbase64', 'data:image/jpeg;base64,', $row['file_receipt']);
+                            } elseif (!str_starts_with($row['file_receipt'], 'data:image/jpeg;base64,')) {
+                                // If no prefix or incorrect prefix, encode and add the correct prefix
+                                $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
+                            }
                         }
                     }
+                    
+                    
 
                     echo json_encode($data); // Return found data
                 } else {

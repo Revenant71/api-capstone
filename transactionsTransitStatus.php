@@ -1,6 +1,11 @@
 <?php
 require_once('connectDb.php');
-
+require 'configSmtp.php'; 
+require 'vendor/autoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
+use OTPHP\TOTP;
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: *");
@@ -13,9 +18,17 @@ $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        // use reference number and Id as basis
-        // get status alone
+        $found_reference_no = $URI_array[3] ?? null;
 
+        if (!$found_reference_no || empty($transaction['owner_lastname']) || empty($transaction['statusTransit'])) {
+            echo json_encode(['status' => 0, 'message' => 'Invalid reference number, owner lastname, or missing statusTransit']);
+            exit;
+        }
+
+
+        // TODO fetch
+
+        // echo json_encode($response);
         break;
         
     case 'PATCH':
@@ -39,6 +52,7 @@ switch ($method) {
         $stmt->bindParam(':statusTransit', $transaction['statusTransit'], PDO::PARAM_STR);
 
         if($stmt->execute()){
+            
             $response = ['status'=>1, 'message'=>`PATCH statusTransit successful!`];
         } else {
             $response = ['status'=>0, 'message'=>'PATCH '. htmlspecialchars($found_reference_no) . ' statusTransit failed!'];

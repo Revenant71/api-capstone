@@ -28,8 +28,11 @@ switch ($method) {
         }
 
         $allowedTypes = ['image/jpeg', 'image/png'];
-        if (!in_array($file['type'], $allowedTypes)) {
-            echo json_encode(['success' => false, 'message' => 'Invalid file type. Only JPEG and PNG are allowed.']);
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK || !in_array($file['type'], $allowedTypes)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Invalid file upload. Only JPEG and PNG images are allowed.',
+            ]);
             exit;
         }
 
@@ -39,25 +42,34 @@ switch ($method) {
         //     exit;
         // }
         
-        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
-            echo json_encode(['success' => false, 'message' => 'File upload failed.']);
+        // Determine the correct prefix based on MIME type
+        $prefix = match ($file['type']) {
+            'image/jpeg' => 'data:image/jpeg;base64,',
+            'image/png' => 'data:image/png;base64,',
+            default => '',
+        };
+
+        if (!$prefix) {
+            echo json_encode(['success' => false, 'message' => 'Unsupported file type.']);
             exit;
         }
 
         if ($file['error'] === UPLOAD_ERR_OK) {
           // Read the file content as binary
           $fileContent = file_get_contents($file['tmp_name']);
-            
+          $base64EncodedFile = $prefix . base64_encode($fileContent);
+
           $qy = "UPDATE transactions SET file_receipt = :fileReceipt WHERE reference_number = :refNumber AND lastname_owner = :trackingName";
 
           try {
             $stmt = $db_connection->prepare($qy);
             $stmt->bindParam(':fileReceipt', $fileContent, PDO::PARAM_LOB);
+            // $stmt->bindParam(':fileReceipt', $base64EncodedFile, PDO::PARAM_STR);
             $stmt->bindParam(':refNumber', $refNumber, PDO::PARAM_STR);
             $stmt->bindParam(':trackingName', $trackingName, PDO::PARAM_STR);
 
             if ($stmt->execute()) {
-                echo json_encode(['success' => true, 'message' => 'File uploaded successfully.']);
+                echo json_encode(['success' => true, 'message' => 'File uploaded and stored successfully.']);
             } else {
                 echo json_encode(['success' => false, 'message' => 'Failed to upload file to the database.']);
             }
