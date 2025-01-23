@@ -159,7 +159,7 @@ switch ($method){
                         <tr>
                             <th style='border: 1px solid #ddd; padding: 8px;'>Document</th>
                             <th style='border: 1px solid #ddd; padding: 8px;'>Copies</th>
-                            <th style='border: 1px solid #ddd; padding: 8px;'>Price</th>
+                            <th style='border: 1px solid #ddd; padding: 8px;'>Price (₱)</th>
                             <th style='border: 1px solid #ddd; padding: 8px;'></th>
                         </tr>
                     </thead>
@@ -185,14 +185,14 @@ switch ($method){
                     <body>
                         <p>Hi, '. $transaction['owner_firstname'] .'.</p>
                         <br/>
-                        <strong>Your request '.$transaction['reference'].' is: '. $transaction['status_transit'] .'.</strong>
+                        Your request <strong>'.$transaction['reference'].'</strong> is: <strong>'. $transaction['status_transit'] .'.</strong>
                         <br/><br/>
                         <p>This is an official sales invoice.</p>
                         ' . $serviceTable . '
                         <br/><br/>
                         ' . $selectedDocsTable . '
                         <br/>
-                        <p>Kindly pay the amoount due if you have not paid yet and upload your finance receipt as soon as possible.</p>
+                        <p>Kindly pay the amount due if you have not paid yet and upload your finance receipt as soon as possible.</p>
                         <br/>
                         <i>Please do not reply to this email.</i>
                     </body>
@@ -212,7 +212,7 @@ switch ($method){
                 Document Details:
                 ' . strip_tags($selectedDocsTable) . '
 
-                Kindly pay the amoount due if you have not paid yet and upload your finance receipt as soon as possible.
+                Kindly pay the amount due if you have not paid yet and upload your finance receipt as soon as possible.
 
                 PLEASE DO NOT REPLY TO THIS EMAIL.';
 

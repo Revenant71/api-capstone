@@ -23,14 +23,14 @@ switch ($method){
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3] ?? null;
 
-        if (!$found_reference_no || empty($transaction['staff']) || empty($transaction['owner_lastname']) || empty($transaction['requestor_email']) || empty($transaction['reason']) || empty($transaction['remarks'])) {
+        if (!$found_reference_no || empty($transaction['staff']) || empty($transaction['owner_firstname']) || empty($transaction['requestor_email']) || empty($transaction['reason']) || empty($transaction['remarks'])) {
             echo json_encode(['status' => 0, 'message' => 'Invalid staff, reference number, owner lastname, requestor email, reason, or remarks']);
             exit;
         }
 
         $qy = "UPDATE transactions 
         SET statusTransit = :statusTransit, id_employee = :id_employee, updated_at = NOW() 
-        WHERE reference_number = :reference AND lastname_owner = :lastname_owner";
+        WHERE reference_number = :reference AND firstname_owner = :firstname_owner";
         
         $status_rejected = "Rejected";
 
@@ -38,7 +38,7 @@ switch ($method){
         $stmt->bindParam(':statusTransit', $status_rejected, PDO::PARAM_STR);
         $stmt->bindParam(':id_employee', $transaction['staff'], PDO::PARAM_INT);
         $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
-        $stmt->bindParam(':lastname_owner', $transaction['owner_lastname'], PDO::PARAM_STR);
+        $stmt->bindParam(':firstname_owner', $transaction['owner_firstname'], PDO::PARAM_STR);
         
         if($stmt->execute()){
             try {
@@ -64,7 +64,7 @@ switch ($method){
                         </style>
                         </head>
                         <body> 
-                            <strong>Hello Mr./Ms./Mrs. '.$transaction['owner_lastname'].'.</strong>
+                            <strong>Hello Mr./Ms./Mrs. '.$transaction['owner_firstname'].'.</strong>
                             <br/>
                             <p>We regret to inform you that your request, '.$found_reference_no.'</p>
                             <p><strong>Has been rejected.</strong></p>
@@ -85,7 +85,7 @@ switch ($method){
                     </html>
                 ';
                 $mailReject->AltBody = "
-                Hello Mr./Ms./Mrs. " . $transaction['owner_lastname'] . ".
+                Hi, " . $transaction['owner_firstname'] . ".
                 We apologize to inform you that your request, " . $found_reference_no . " has been rejected.
                 
                 Reason: " . $transaction['reason'] . "
