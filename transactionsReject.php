@@ -23,19 +23,21 @@ switch ($method){
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3] ?? null;
 
-        if (!$found_reference_no || empty($transaction['staff']) || empty($transaction['owner_firstname']) || empty($transaction['requestor_email']) || empty($transaction['reason']) || empty($transaction['remarks'])) {
-            echo json_encode(['status' => 0, 'message' => 'Invalid staff, reference number, owner lastname, requestor email, reason, or remarks']);
+        if (!$found_reference_no || empty($transaction['reason']) || empty($transaction['remarks']) || empty($transaction['staff']) || empty($transaction['owner_firstname']) || empty($transaction['requestor_email']) || empty($transaction['reason']) || empty($transaction['remarks'])) {
+            echo json_encode(['status' => 0, 'message' => 'Invalid staff, reference number, reason, remarks owner firstname, requestor email, reason, or remarks']);
             exit;
         }
 
         $qy = "UPDATE transactions 
-        SET statusTransit = :statusTransit, id_employee = :id_employee, updated_at = NOW() 
+        SET statusTransit = :statusTransit, id_employee = :id_employee, reason_reject = :reason_reject, remarks = :remarks, updated_at = NOW() 
         WHERE reference_number = :reference AND firstname_owner = :firstname_owner";
         
         $status_rejected = "Rejected";
 
         $stmt = $db_connection->prepare($qy);
         $stmt->bindParam(':statusTransit', $status_rejected, PDO::PARAM_STR);
+        $stmt->bindParam(':reason_reject', $transaction['reason'], PDO::PARAM_STR);
+        $stmt->bindParam(':remarks', $transaction['remarks'], PDO::PARAM_STR);
         $stmt->bindParam(':id_employee', $transaction['staff'], PDO::PARAM_INT);
         $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
         $stmt->bindParam(':firstname_owner', $transaction['owner_firstname'], PDO::PARAM_STR);
@@ -57,6 +59,7 @@ switch ($method){
                 $mailReject->isHTML(true);
                 $mailReject->Subject = $found_reference_no . ' has been Rejected';
                 // TODO external css as ' . $css . '
+                // TODO $transaction['receipt'] as html image
                 $mailReject->Body = '
                     <html>
                         <head>
