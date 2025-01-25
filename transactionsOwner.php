@@ -42,7 +42,6 @@ switch ($method){
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
                 if ($data) {
-                    // FIXME foreach not working, duplicate prefix
                     foreach ($data as &$row) {
                         if (isset($row['file_receipt'])) {
                             // Remove any incorrect or extra prefix if it exists
@@ -61,11 +60,41 @@ switch ($method){
                         }
                     }
                     
+                    // FIXME does not work, this should scan if image is jpeg or png
                     // foreach ($data as &$row) {
                     //     if (isset($row['file_receipt'])) {
-                    //         $row['file_receipt'] = base64_encode($row['file_receipt']);
+                    //         // Remove any incorrect or extra prefix if it exists
+                    //         $row['file_receipt'] = preg_replace(
+                    //             '/^(dataimage\/[a-z]+base64,|data:image\/[a-z]+;base64,)/', 
+                    //             '', 
+                    //             $row['file_receipt']
+                    //         );
+                    
+                    //         // Decode the base64 string
+                    //         $decoded = base64_decode($row['file_receipt'], true);
+                    
+                    //         if ($decoded !== false) {
+                    //             // Try to detect MIME type based on the binary data
+                    //             $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    //             $mimeType = finfo_buffer($finfo, $decoded);
+                    //             finfo_close($finfo);
+                    
+                    //             // Determine the correct prefix and prepend it
+                    //             if ($mimeType === 'image/jpeg') {
+                    //                 $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($decoded);
+                    //             } elseif ($mimeType === 'image/png') {
+                    //                 $row['file_receipt'] = 'data:image/png;base64,' . base64_encode($decoded);
+                    //             } else {
+                    //                 // If MIME type is unsupported, set it to null or log an error
+                    //                 $row['file_receipt'] = null; // Or handle as needed
+                    //             }
+                    //         } else {
+                    //             // If decoding fails, set to null or handle error
+                    //             $row['file_receipt'] = null; // Or provide a fallback
+                    //         }
                     //     }
                     // }
+                    
                     
                     echo json_encode($data);
                 } else {

@@ -31,7 +31,7 @@ switch ($method){
         $qy = "UPDATE transactions SET statusTransit = :statusTransit, id_employee = :id_employee, updated_at = NOW()";
         
         $params = [
-            ':statusTransit' => "Accepted",
+            ':statusTransit' => $transaction['status_transit'],
             ':id_employee' => $transaction['staff'],
             ':reference' => $found_reference_no,
             ':firstname_owner' => $transaction['owner_firstname']
@@ -58,7 +58,7 @@ switch ($method){
         $qy .= " WHERE reference_number = :reference AND firstname_owner = :firstname_owner";
 
         $stmt = $db_connection->prepare($qy);
-        // $stmt->bindParam(':statusTransit', $status_accepted, PDO::PARAM_STR);
+        // $stmt->bindParam(':statusTransit', $transaction['status_transit'], PDO::PARAM_STR);
         // $stmt->bindParam(':id_employee', $transaction['staff'], PDO::PARAM_INT);
         // $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
         // $stmt->bindParam(':firstname_owner', $transaction['owner_firstname'], PDO::PARAM_STR);
@@ -139,8 +139,9 @@ switch ($method){
                     </tr>";
                 }
 
+                
                 $serviceTable = "
-                <table style='border-collapse: collapse; width: 100%;'>
+                <table style='border-collapse: collapse; width: 60%;'>
                     <thead>
                         <tr>
                             <th style='border: 1px solid #ddd; padding: 8px;'>Service</th>
@@ -154,7 +155,7 @@ switch ($method){
 
                 // HTML table for selected documents
                 $selectedDocsTable = "
-                <table style='border-collapse: collapse; width: 100%;'>
+                <table style='border-collapse: collapse; width: 60%;'>
                     <thead>
                         <tr>
                             <th style='border: 1px solid #ddd; padding: 8px;'>Document</th>
@@ -168,6 +169,8 @@ switch ($method){
                     </tbody>
                 </table>";
 
+                $hardcodeTransit = "Accepted";
+                
                 // from, to, body
                 $mailAccept->setFrom(SEND_FROM, SEND_FROM_NAME);
                 $mailAccept->addAddress($transaction['requestor_email']);
@@ -184,15 +187,17 @@ switch ($method){
                     </head>
                     <body>
                         <p>Hi, '. $transaction['owner_firstname'] .'.</p>
-                        <br/>
-                        Your request <strong>'.$transaction['reference'].'</strong> is: <strong>'. $transaction['status_transit'] .'.</strong>
+                        
+                        Your payment for document request with <strong>'.$transaction['reference'].'</strong> has been recieved and request has been <strong>'. $hardcodeTransit .'.</strong>
                         <br/><br/>
-                        <p>This is an official sales invoice.</p>
+                        <p>This serves as your official payment invoice.</p>
                         ' . $serviceTable . '
                         <br/><br/>
                         ' . $selectedDocsTable . '
                         <br/>
-                        <p>Kindly pay the amount due if you have not paid yet and upload your finance receipt as soon as possible.</p>
+
+                        <p>You may show this copy to the finance department when you claim your document.</p>
+                        <p>Otherwise, you may keep this as your reference if you opted for your document to be delivered.</p>
                         <br/>
                         <i>Please do not reply to this email.</i>
                     </body>
@@ -200,21 +205,23 @@ switch ($method){
                 ';
 
                 $mailAccept->AltBody = '
-                Hi, '. $transaction['owner_firstname'] .'.
-
-                Your request ' . $transaction['reference'] . ' is: ' . $transaction['status_transit'] . '. 
-
-                This is an official sales invoice.
-
+                Hi, ' . $transaction['owner_firstname'] . ',
+                
+                Your payment for document request with reference ' . $transaction['reference'] . ' has been received and the request has been updated to: ' . $hardcodeTransit . '.
+                
+                This serves as your official payment invoice.
+                
                 Service Details:
                 ' . strip_tags($serviceTable) . '
-
+                
                 Document Details:
                 ' . strip_tags($selectedDocsTable) . '
-
-                Kindly pay the amount due if you have not paid yet and upload your finance receipt as soon as possible.
-
+                
+                You may show this copy to the finance department when you claim your document. 
+                Otherwise, you may keep this as your reference if you opted for your document to be delivered.
+                
                 PLEASE DO NOT REPLY TO THIS EMAIL.';
+                
 
                 if($mailAccept->send()){
                     // $response = ['status'=>1, 'message'=>`Accept statusTransit successful!`];

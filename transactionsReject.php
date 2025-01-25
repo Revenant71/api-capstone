@@ -56,46 +56,95 @@ switch ($method){
                 $mailReject->addReplyTo(REPLY_TO, REPLY_TO_NAME);
                 $mailReject->isHTML(true);
                 $mailReject->Subject = $found_reference_no . ' has been Rejected';
+                // TODO external css as ' . $css . '
                 $mailReject->Body = '
                     <html>
                         <head>
                         <style>
-                            ' . $css . '
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                            padding: 0;
+                            line-height: 1.6;
+                            color: #333;
+                        }
+
+                        table {
+                            width: 60%;
+                            border-collapse: collapse;
+                            margin: 20px auto; 
+                            font-size: 16px;
+                            border: 1px solid #ddd;
+                        }
+
+                        th, td {
+                            text-align: left;
+                            padding: 12px;
+                            border: 1px solid #ddd;
+                        }
+
+                        th {
+                            background-color: #f2f2f2;
+                            font-weight: bold;
+                        }
+
+                        td.remarks {
+                            height: 100px; 
+                            vertical-align: top;
+                            text-align: justify; 
+                        }
+
+                        td.reason {
+                            text-align: justify; 
+                        }
+
+                        h3, p {
+                            text-align: justify;
+                            margin: 10px 20px;
+                        }
+
+                        strong {
+                            font-weight: bold;
+                        }
                         </style>
                         </head>
                         <body> 
-                            <strong>Hello Mr./Ms./Mrs. '.$transaction['owner_firstname'].'.</strong>
+                            <strong>Hi, '.$transaction['owner_firstname'].'.</strong>
                             <br/>
-                            <p>We regret to inform you that your request, '.$found_reference_no.'</p>
-                            <p><strong>Has been rejected.</strong></p>
+                            <p>We regret to inform you that your request, '.$found_reference_no.' has been <strong>Rejected</strong>.</p>
                             <br/>
-                            <em>Below are details for this course of action.</em>
-                            <h2>Reason: '.$transaction['reason'].'</h2>
-                            <br/>
-                            <h2>Remarks:</h2>
-                            <p><em>'.$transaction['remarks'].'</em></p>       
-                            
+                            <em>Below are the details for this course of action:</em>
+                            <table>
+                                <tr>
+                                    <th>Reason</th>
+                                    <td>'.$transaction['reason'].'</td>
+                                </tr>
+                                <tr>
+                                    <th>Remarks</th>
+                                    <td class="remarks">'.$transaction['remarks'].'</td>
+                                </tr>
+                            </table>
+
                             <br/>
                             <strong>You can reach out to the Registrar\'s Office for further actions upon receiving this message.</strong>
                             <br/>
-                            <p>To make a new request,</p>
-                            <p>please proceed to <a href="http://localhost:3000/start" target="_blank" title="Click here to make a new document request instead.">this link</a></p>
-                            <h3>This an auto-generated email. <em>Please do not reply.</em></h3>
+                            <p>To make a new request, please proceed to <a href="http://localhost:3000/start" target="_blank" title="Click here to make a new document request instead.">this link</a>.</p>
+                            <h3>This is an auto-generated email. <em>Please do not reply.</em></h3>
                         </body>
                     </html>
                 ';
                 $mailReject->AltBody = "
                 Hi, " . $transaction['owner_firstname'] . ".
                 We apologize to inform you that your request, " . $found_reference_no . " has been rejected.
-                
+
                 Reason: " . $transaction['reason'] . "
-                
+
                 Remarks:
                 " . $transaction['remarks'] . "
-                
+
                 You can reach out to the Registrar's Office for further actions upon receiving this message.
                 To make a new request, please proceed to this link: http://localhost:3000/start.
-                
+
                 This is an auto-generated email. Please do not reply.
                 ";
                 

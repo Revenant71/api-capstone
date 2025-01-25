@@ -23,7 +23,7 @@ switch ($method) {
 
         if (isset($found_reference_no)) {
             $qy = "
-            SELECT 
+            SELECT z
                 TCN.*, 
                 DOC.title AS DOC_title, 
                 DOC.author AS DOC_author,
@@ -49,9 +49,26 @@ switch ($method) {
 
             // compress longblob data to base64 string
             if ($data && isset($data['file_receipt'])) {
-                // TODO this will not work if the image is png and has transparency
-                $data['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($data['file_receipt']);
+                // below will not work if the image is png 
+                // $data['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($data['file_receipt']);
+
+                foreach ($data as &$row) {
+                    if (isset($row['file_receipt'])) {
+                        // Remove any incorrect or extra prefix if it exists
+                        $row['file_receipt'] = preg_replace('/^(dataimage\/jpegbase64,|data:image\/jpeg;base64,)/', '', $row['file_receipt']);
                 
+                        // Ensure the value is properly base64 encoded
+                        $decoded = base64_decode($row['file_receipt'], true);
+                
+                        if ($decoded !== false) {
+                            // Re-encode and prepend the correct prefix
+                            $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($decoded);
+                        } else {
+                            // If decoding fails, encode the raw value
+                            $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
+                        }
+                    }
+                }
             }
         } else {
             $qy = "
@@ -239,13 +256,16 @@ switch ($method) {
             course_year = :course_year,
             year_last = :year_last,
             purpose_req = :purpose_req,
-            statusPayment = :statusPayment,
-            statusTransit = :statusTransit,
             id_employee = :id_employee,
-            overdue_days = :overdue_days,
             updated_at = NOW()
         ";
 
+        if (!empty($transaction['statusPayment'])) {
+            $qy .= ", statusPayment = :statusPayment";
+        }
+        if (!empty($transaction['statusTransit'])) {
+            $qy .= ", statusTransit = :statusTransit";
+        }
         if (!empty($transaction['owner_middlename'])) {
             $qy .= ", middlename_owner = :middlename_owner";
         }
@@ -263,6 +283,9 @@ switch ($method) {
         }
         if (!empty($transaction['delivery_street'])) {
             $qy .= ", delivery_street = :delivery_street";
+        }
+        if (!empty($transaction['overdue_days'])) {
+            $qy .= ", overdue_days = :overdue_days";
         }
         // if (!empty($transaction['file_receipt'])) {
         //     $qy .= ", file_receipt = :file_receipt";
@@ -295,12 +318,15 @@ switch ($method) {
             ':course_year' => $transaction['owner_course_year'],
             ':year_last' => $transaction['owner_year_last'],
             ':purpose_req' => $transaction['purpose'],
-            ':statusPayment' => $transaction['status_payment'],
-            ':statusTransit' => $transaction['status_transit'],
             ':id_employee' => $transaction['staff'],
-            ':overdue_days' => $transaction['overdue_days'],
         ];
 
+        if (!empty($transaction['statusPayment'])) {
+            $transaction_values[':statusPayment'] = $transaction['status_payment'];
+        }
+        if (!empty($transaction['statusTransit'])) {
+            $transaction_values[':statusTransit'] = $transaction['status_transit'];
+        }
         if (!empty($transaction['owner_middlename'])) {
             $transaction_values[':middlename_owner'] = $transaction['owner_middlename'];
         }
@@ -318,6 +344,9 @@ switch ($method) {
         }
         if (!empty($transaction['delivery_street'])) {
             $transaction_values[':delivery_street'] = $transaction['delivery_street'];
+        }
+        if (!empty($transaction['overdue_days'])) {
+            $transaction_values[':overdue_days'] = $transaction['overdue_days'];
         }
         // if (!empty($transaction['file_receipt'])) {
         //     $transaction_values[':file_receipt'] = base64_decode($transaction['file_receipt']);

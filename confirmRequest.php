@@ -48,6 +48,7 @@ switch ($method) {
                 $mailRequest->addReplyTo(REPLY_TO, REPLY_TO_NAME);
                 $mailRequest->isHTML(true);
                 $mailRequest->Subject = 'Document Request Confirmation';
+                // TODO anchor
                 $mailRequest->Body = '
                     <html>
                         <head>
@@ -57,13 +58,15 @@ switch ($method) {
                         </head>
                         <body>
                             <p>Hi, '.$data['name_req'].'.</p>
-                            <br/>
-                            <p>Your requests have been submitted.</p>
+                            
+                            <p>Your request has been submitted.</p>
                             <p><em>Use the reference number below to track them on DocuQuest</em></p>
                             <ul>
                              <li> '.$display_reference.' </li>
                             </ul>
+                            <p>In order to proceed with your request, please track your required fee by accessing this <a href="http://localhost:3000/start" target="_blank" title="Click here to track your request.">link.</a></p>
                             <br/>
+                            <p>Below are your options for the official payment channels:</p>
                             <h3>Modes&nbsp;of&nbsp;Payment</h3>
                             <ul>
                               <li>
