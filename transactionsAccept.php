@@ -23,20 +23,20 @@ switch ($method){
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3] ?? null;
 
-        if (!$found_reference_no || empty($transaction['staff']) || empty($transaction['owner_firstname']) || empty($transaction['requestor_email']) || empty($transaction['service']) || empty($transaction['selected_docs'])) {
-            echo json_encode(['status' => 0, 'message' => 'Invalid staff, reference number, owner firstname, requestor email, service type, or selected docs']);
+        if (!$found_reference_no || empty($transaction['staff']) || empty($transaction['owner_firstname']) || empty($transaction['owner_lastname']) || empty($transaction['requestor_email']) || empty($transaction['service']) || empty($transaction['selected_docs'])) {
+            echo json_encode(['status' => 0, 'message' => 'Invalid staff, reference number, owner firstname, owner lastname, requestor email, service type, or selected docs']);
             exit;
         }
 
-        $qy = "UPDATE transactions SET statusTransit = :statusTransit, id_employee = :id_employee, updated_at = NOW()";
+        $qy = "UPDATE transactions SET statusTransit = :statusTransit, id_employee = :id_employee, reason_reject = NULL, remarks = NULL, updated_at = NOW()";
         
         $params = [
             ':statusTransit' => $transaction['status_transit'],
             ':id_employee' => $transaction['staff'],
             ':reference' => $found_reference_no,
-            ':firstname_owner' => $transaction['owner_firstname']
+            ':lastname_owner' => $transaction['owner_lastname']
         ];
-
+        // ':firstname_owner' => $transaction['owner_firstname']
         // Add optional fields
         if (!empty($transaction['region'])) {
             $qy .= ", delivery_region = :delivery_region";
@@ -55,13 +55,9 @@ switch ($method){
             $params[':delivery_street'] = $transaction['delivery_street'];
         }
 
-        $qy .= " WHERE reference_number = :reference AND firstname_owner = :firstname_owner";
+        $qy .= " WHERE reference_number = :reference AND lastname_owner = :lastname_owner";
 
         $stmt = $db_connection->prepare($qy);
-        // $stmt->bindParam(':statusTransit', $transaction['status_transit'], PDO::PARAM_STR);
-        // $stmt->bindParam(':id_employee', $transaction['staff'], PDO::PARAM_INT);
-        // $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
-        // $stmt->bindParam(':firstname_owner', $transaction['owner_firstname'], PDO::PARAM_STR);
 
         if($stmt->execute($params)) {
             try {
@@ -176,7 +172,7 @@ switch ($method){
                 $mailAccept->addAddress($transaction['requestor_email']);
                 $mailAccept->addReplyTo(REPLY_TO, REPLY_TO_NAME);
                 $mailAccept->isHTML(true);
-                $mailAccept->Subject = $transaction['reference'] . ' DocuQuest Update';
+                $mailAccept->Subject = $transaction['reference'] . ' DocuQuest Accepted';
                 // $transaction['service']
                 $mailAccept->Body = '
                 <html>

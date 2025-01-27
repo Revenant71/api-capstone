@@ -57,7 +57,7 @@ switch ($method){
                 $mailReject->addAddress($transaction['requestor_email']);
                 $mailReject->addReplyTo(REPLY_TO, REPLY_TO_NAME);
                 $mailReject->isHTML(true);
-                $mailReject->Subject = $found_reference_no . ' has been Rejected';
+                $mailReject->Subject = $found_reference_no . ' DocuQuest Rejected';
                 // TODO external css as ' . $css . '
                 // TODO $transaction['receipt'] as html image
                 $mailReject->Body = '
