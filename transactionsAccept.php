@@ -101,10 +101,6 @@ switch ($method){
                     <td colspan='3' style='border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;'>Total:</td>
                     <td style='border: 1px solid #ddd; padding: 8px; font-weight: bold;'>". htmlspecialchars(number_format($transaction['total_price'], 2)) ."</td>
                 </tr>";
-
-                // TODO if $transaction['region']) is not empty,
-                // query the transactions table and find the region and fee for the given $transaction['region'])
-                // then add a new <tr></tr> for the region and fee
                 
                 // Generate the service table
                 $serviceTableRows = "

@@ -107,33 +107,41 @@ switch ($method){
                 // Generate the service table
                 $serviceTableRows = "";
 
-                // Add Release Date row first, if available
+                // Add Release Date row directly
                 if (!empty($transaction['release_date'])) {
-                    $formattedDate = date('M d, Y', strtotime(explode('T', $transaction['release_date'])[0]));
+                    $formattedReleaseDate = htmlspecialchars(date('M d, Y', strtotime(explode('T', $transaction['release_date'])[0])));
                     $serviceTableRows .= "
                     <tr>
-                        <th colspan='2' style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Release Details</th>
-                    </tr>
-                    <tr>
                         <th scope='row' style='border: 1px solid #ddd; padding: 8px;'>Release Date</th>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>". htmlspecialchars($formattedDate) ."</td>
+                        <td style='border: 1px solid #ddd; padding: 8px;'>{$formattedReleaseDate}</td>
                     </tr>";
                 }
                 
-                // Append the Service rows after the Release Date row
+
+                $serviceTableRows = "";
+
+                // Add Release Date row directly on top
+                if (!empty($transaction['release_date'])) {
+                    $formattedReleaseDate = htmlspecialchars(date('M d, Y', strtotime(explode('T', $transaction['release_date'])[0])));
+                    $serviceTableRows .= "
+                    <tr>
+                        <th scope='row' style='border: 1px solid #ddd; padding: 8px;'>Release Date</th>
+                        <td style='border: 1px solid #ddd; padding: 8px;'>{$formattedReleaseDate}</td>
+                    </tr>";
+                }
+                
+                // Add Service section
                 $serviceTableRows .= "
                 <tr>
-                    <th colspan='2' style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Service</th>
-                </tr>
-                <tr>
+                    <th scope='row' style='border: 1px solid #ddd; padding: 8px;'>Service</th>
                     <td style='border: 1px solid #ddd; padding: 8px;'>{$transaction['service']}</td>
                 </tr>";
                 
-                // Append delivery details if available
+                // If the service is "Delivery", add delivery details
                 if ($transaction['service'] === "Delivery" && !empty($transaction['region'])) {
                     $serviceTableRows .= "
                     <tr>
-                        <td style='border: 1px solid #ddd; padding: 8px;'>Region</td>
+                        <th scope='row' style='border: 1px solid #ddd; padding: 8px;'>Region</th>
                         <td style='border: 1px solid #ddd; padding: 8px;'>{$transaction['region']}</td>
                     </tr>
                     <tr>
@@ -153,20 +161,15 @@ switch ($method){
                     </tr>";
                 }
                 
+                // Finalize the Service Table
                 $serviceTable = "
                 <table style='border-collapse: collapse; width: 60%;'>
-                    <thead>
-                        <tr>
-                            <th style='border: 1px solid #ddd; padding: 8px;'>Details</th>
-                            <th style='border: 1px solid #ddd; padding: 8px;'>Information</th>
-                        </tr>
-                    </thead>
                     <tbody>
                         {$serviceTableRows}
                     </tbody>
                 </table>";
                 
-
+                
                 // HTML table for selected documents
                 $selectedDocsTable = "
                 <table style='border-collapse: collapse; width: 60%;'>
@@ -204,7 +207,7 @@ switch ($method){
                     <body>
                         <p>Hi, '. $transaction['owner_firstname'] .'.</p>
                         
-                        Your document request <strong>'.$found_reference_no .'</strong> has been recieved and marked for <strong>'. $hardcodeTransit .'.</strong>
+                        Your document request <strong>'.$found_reference_no .'</strong> has been recieved and marked <strong>'. $hardcodeTransit .'.</strong>
                         <br/><br/>
 
                         <p>Here are the details of your request:</p>
