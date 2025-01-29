@@ -120,7 +120,7 @@ switch ($method){
 
                 $serviceTableRows = "";
 
-                // Add Release Date row directly on top
+                // Add Release Date row directly at the top
                 if (!empty($transaction['release_date'])) {
                     $formattedReleaseDate = htmlspecialchars(date('M d, Y', strtotime(explode('T', $transaction['release_date'])[0])));
                     $serviceTableRows .= "
@@ -137,7 +137,7 @@ switch ($method){
                     <td style='border: 1px solid #ddd; padding: 8px;'>{$transaction['service']}</td>
                 </tr>";
                 
-                // If the service is "Delivery", add delivery details
+                // If the service is "Delivery", add delivery details properly
                 if ($transaction['service'] === "Delivery" && !empty($transaction['region'])) {
                     $serviceTableRows .= "
                     <tr>
@@ -161,14 +161,13 @@ switch ($method){
                     </tr>";
                 }
                 
-                // Finalize the Service Table
+                // Finalize the Service Table with structured alignment
                 $serviceTable = "
                 <table style='border-collapse: collapse; width: 60%;'>
                     <tbody>
                         {$serviceTableRows}
                     </tbody>
                 </table>";
-                
                 
                 // HTML table for selected documents
                 $selectedDocsTable = "

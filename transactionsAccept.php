@@ -106,8 +106,9 @@ switch ($method){
                 $serviceTableRows = "
                 <tr>
                     <td style='border: 1px solid #ddd; padding: 8px;'>{$transaction['service']}</td>
+                    " . (!empty($transaction['region']) ? "<td style='border: 1px solid #ddd; padding: 8px;'></td>" : "") . "
                 </tr>";
-
+                
                 if ($transaction['service'] === "Delivery" && !empty($transaction['region'])) {
                     $serviceTableRows .= "
                     <tr>
@@ -130,20 +131,21 @@ switch ($method){
                         <td style='border: 1px solid #ddd; padding: 8px;'>{$transaction['delivery_street']}</td>
                     </tr>";
                 }
-
                 
+                // Table structure
                 $serviceTable = "
                 <table style='border-collapse: collapse; width: 60%;'>
                     <thead>
                         <tr>
                             <th style='border: 1px solid #ddd; padding: 8px;'>Service</th>
-                            ".($transaction['service'] === "Delivery" && !empty($transaction['region']) ? "<th style='border: 1px solid #ddd; padding: 8px;'>Region</th>" : "")."
+                            " . (!empty($transaction['region']) ? "<th style='border: 1px solid #ddd; padding: 8px;'>Region</th>" : "") . "
                         </tr>
                     </thead>
                     <tbody>
                         {$serviceTableRows}
                     </tbody>
                 </table>";
+                
 
                 // HTML table for selected documents
                 $selectedDocsTable = "

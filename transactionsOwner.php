@@ -44,37 +44,38 @@ switch ($method){
                 if ($data) {
                     foreach ($data as &$row) {
                         if (isset($row['file_receipt'])) {
-                            // Remove any incorrect or extra prefix if it exists
-                            $row['file_receipt'] = preg_replace('/^(dataimage\/jpegbase64,|data:image\/jpeg;base64,)/', '', $row['file_receipt']);
-                    
-                            // Ensure the value is properly base64 encoded
-                            $decoded = base64_decode($row['file_receipt'], true);
-                    
-                            if ($decoded !== false) {
-                                // Re-encode and prepend the correct prefix
-                                $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($decoded);
-                            } else {
-                                // If decoding fails, encode the raw value
-                                $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
-                            }
+                            // Assume the data is already base64-encoded with a prefix
+                            continue;
                         }
                     }
                     
-                    // FIXME does not work, this should scan if image is jpeg or png
+                    // for JPEGS only
                     // foreach ($data as &$row) {
                     //     if (isset($row['file_receipt'])) {
                     //         // Remove any incorrect or extra prefix if it exists
-                    //         $row['file_receipt'] = preg_replace(
-                    //             '/^(dataimage\/[a-z]+base64,|data:image\/[a-z]+;base64,)/', 
-                    //             '', 
-                    //             $row['file_receipt']
-                    //         );
+                    //         $row['file_receipt'] = preg_replace('/^(dataimage\/jpegbase64,|data:image\/jpeg;base64,)/', '', $row['file_receipt']);
                     
-                    //         // Decode the base64 string
+                    //         // Ensure the value is properly base64 encoded
                     //         $decoded = base64_decode($row['file_receipt'], true);
                     
                     //         if ($decoded !== false) {
-                    //             // Try to detect MIME type based on the binary data
+                    //             // Re-encode and prepend the correct prefix
+                    //             $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($decoded);
+                    //         } else {
+                    //             // If decoding fails, encode the raw value
+                    //             $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
+                    //         }
+                    //     }
+                    // }
+
+                    // Code below not working. cannot return stored image as png
+                    // foreach ($data as &$row) {
+                    //     if (isset($row['file_receipt'])) {
+                    //         // Decode the base64 string (if applicable)
+                    //         $decoded = base64_decode($row['file_receipt'], true);
+                    
+                    //         if ($decoded !== false) {
+                    //             // Detect MIME type based on binary data
                     //             $finfo = finfo_open(FILEINFO_MIME_TYPE);
                     //             $mimeType = finfo_buffer($finfo, $decoded);
                     //             finfo_close($finfo);
@@ -94,6 +95,7 @@ switch ($method){
                     //         }
                     //     }
                     // }
+                    
                     
                     
                     echo json_encode($data);

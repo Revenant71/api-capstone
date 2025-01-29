@@ -17,12 +17,26 @@ if (!$db_connection) {
 // Handle GET request to fetch shipping fees
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
-        $qy = "SELECT * FROM shipping_fees";
-        $stmt = $db_connection->prepare($qy);
+        $found_region_name = $_GET['region'] ?? null;
+
+        // Prepare the query based on whether the region name is provided
+        if (!empty($found_region_name)) {
+            $qy = "SELECT fee FROM shipping_fees WHERE region = :region";
+            $stmt = $db_connection->prepare($qy);
+            $stmt->bindParam(':region', $found_region_name, PDO::PARAM_STR);
+        } else {
+            $qy = "SELECT * FROM shipping_fees";
+            $stmt = $db_connection->prepare($qy);
+        }
+
+        // Execute the query
         $stmt->execute();
         $shippingFees = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Return the result as JSON
         echo json_encode($shippingFees);
     } catch (PDOException $e) {
+        // Handle and return any database errors
         echo json_encode(['error' => $e->getMessage()]);
     }
 }

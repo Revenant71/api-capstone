@@ -1,5 +1,11 @@
 <?php
 require_once('connectDb.php');
+require 'configSmtp.php'; 
+require 'vendor/autoload.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+use PHPMailer\PHPMailer\SMTP;
+use OTPHP\TOTP;
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: *");
@@ -7,6 +13,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
 
     $db_attempt = new connectDb;
     $db_connection = $db_attempt->connect(); 
+
 
     $method = $_SERVER['REQUEST_METHOD'];
     switch ($method) {
@@ -43,11 +50,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
                     // SQL query to insert the document into categories_docs
                     $qy = "INSERT INTO categories_docs(name, price, processing_days, luzon_price, visayas_price, mindanao_price) 
                            VALUES(:name, :price, :processing_days, :luzon_price, :visayas_price, :mindanao_price)";
-                    
-                    // Prepare the statement
-                    // $data['luzon_price']
-                    // $data['visayas_price']
-                    // $data['mindanao_price']
+                
                     $empty_int = 0;
 
                     $stmt = $db_connection->prepare($qy);
@@ -61,9 +64,160 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
                     // Execute the query and check for success$empty_int
                     if ($stmt->execute()) {
                         // TODO use phpmail email current admin
-
+                        // try {
+                        //     // config
+                        //     $mailCreatedDocs = new PHPMailer(true);
+                        //     $mailCreatedDocs->Host = MAILHOST;
+                        //     $mailCreatedDocs->isSMTP();
+                        //     $mailCreatedDocs->SMTPAuth = true;
+                        //     $mailCreatedDocs->Username = USERNAME;
+                        //     $mailCreatedDocs->Password = PASSWORD;
+                        //     $mailCreatedDocs->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
+                        //     $mailCreatedDocs->Port = 587;
+        
+                        //     $mailCreatedDocs->setFrom(SEND_FROM, SEND_FROM_NAME);
+                        //     $mailCreatedDocs->addAddress($data['email_staff']);
+                        //     $mailCreatedDocs->addReplyTo(REPLY_TO, REPLY_TO_NAME);
+                        //     $mailCreatedDocs->isHTML(true);
+                        //     $mailCreatedDocs->Subject = 'Document Request Confirmation';
+                        //     // TODO anchor
+                        //     $mailCreatedDocs->Body = '
+                        //         <html>
+                        //             <head>
+                        //             <style>
+                                        
+                        //             </style>
+                        //             </head>
+                        //             <body>
+                        //                 <p>Hi, '.$data['name_req'].'.</p>
+                                        
+                        //                 <p>Your request has been submitted.</p>
+                        //                 <p><em>Use the reference number below to track them on DocuQuest</em></p>
+                        //                 <ul>
+                        //                  <li> '.$display_reference.' </li>
+                        //                 </ul>
+                        //                 <p>In order to proceed with your request, please track your required fee by accessing this <a href="http://localhost:3000/start" target="_blank" title="Click here to track your request.">link.</a></p>
+                        //                 <br/>
+                        //                 <p>Below are your options for the official payment channels:</p>
+                        //                 <h3>Modes&nbsp;of&nbsp;Payment</h3>
+                        //                 <ul>
+                        //                   <li>
+                        //                     <strong>ON-SITE</strong>
+                        //                     <p>FINANCE OFFICE IS OPEN</p>
+                        //                     <p><em>8:00 AM TO 4:00 PM</em></p>
+                        //                     <p><em>MONDAY - FRIDAY</em></p>
+                        //                   </li>
+                        //                 <br/>
+                        //                   <li>
+                        //                     <strong>ONLINE</strong>
+                        //                     <p>Students may process payment through our collecting partners listed below.</p>
+                        //                     <strong>PAYMENT COLLECTION FACILITIES</strong>
+                        //                     <ul>
+                        //                         <li>
+                        //                         RCBC
+                        //                             <ol type="A">
+                        //                               <li>OVER THE COUNTER- TRANSACT IN BILLS PAYMENT (GREEN FORM) ;<br/> BILLER NAME - SOUTHWESTERN UNIVERSITY INC.</li>
+                        //                               <br/>
+                        //                               <li>ONLINE BANKING- PROCESS YOUR PAYMENT IN PAY BILLS ;<br/> BILLER NAME - SOUTHWESTERN UNIVERSITY INC.</li>
+                        //                             </ol>
+                        //                         </li>
+                        //                         <br/>
+                        //                         <li>
+                        //                         BDO
+                        //                             <ol type="A">
+                        //                               <li>OVER THE COUNTER- TRANSACT IN BILLS PAYMENT ;<br/>INSTITUTIONAL CODE: 1054 ;<br/> BILLER NAME - SOUTHWESTERN UNIVERSITY INC.</li>
+                        //                               <br/>
+                        //                               <li>ONLINE BANKING- PROCESS YOUR PAYMENT IN BILLS PAYMENT;<br/> BILLER NAME - SOUTHWESTERN UNIVERSITY INC.</li>
+                        //                             </ol>
+                        //                         </li>
+                        //                         <br/>
+                        //                         <li>
+                        //                         GCASH
+                        //                             <ol type="A">
+                        //                               <li>TRANSACT IN PAY BILLS ;<br/> BILLER NAME - PHINMA EDUCATION OR PHINMA SOUTHWESTERN UNIVERSITY</li>
+                        //                               <p>IF ID NUMBER DOES NOT START WITH "05-" , PLEASE INDICATE "05-" BEFORE THE ID NUMBER</p>
+                        //                             </ol>
+                        //                         </li>
+                        //                         <br/>
+                        //                         <li>
+                        //                         ECPAY
+                        //                             <ol type="A">
+                        //                               <li>BILLER NAME - PHINMA EDUCATION</li>
+                        //                               <p>IF ID NUMBER DOES NOT START WITH "05-" , PLEASE INDICATE "05-" BEFORE THE ID NUMBER</p>
+                        //                             </ol>
+                        //                         </li>
+                        //                     </ul>
+                        //                   </li>
+                        //                 </ul>
+            
+                        //                 <p>Thank you for using DocuQuest.</p>
+                        //                 <h3>This an auto-generated email. <em>Please do not reply.</em></h3>
+                        //             </body>
+                        //         </html>      
+                        //     ';
+            
+                        //     $mailCreatedDocs->AltBody = "
+                        //     Hi, {$data['name_req']},
+                            
+                        //     Your requests have been submitted.
+                        //     Use the reference number below to track them on DocuQuest:
+                            
+                        //     {$display_reference}
+                            
+                        //     MODES OF PAYMENT:
+                        //     ON-SITE:
+                        //     FINANCE OFFICE IS OPEN
+                        //     8:00 AM TO 4:00 PM
+                        //     MONDAY - FRIDAY
+                            
+                        //     ONLINE:
+                        //     Students may process payment through our collecting partners listed below.
+                            
+                        //     PAYMENT COLLECTION FACILITIES:
+                            
+                        //     RCBC:
+                        //     A. OVER THE COUNTER - TRANSACT IN BILLS PAYMENT (GREEN FORM);
+                        //        BILLER NAME - SOUTHWESTERN UNIVERSITY INC.
+                        //     B. ONLINE BANKING - PROCESS YOUR PAYMENT IN PAY BILLS;
+                        //        BILLER NAME - SOUTHWESTERN UNIVERSITY INC.
+                            
+                        //     BDO:
+                        //     A. OVER THE COUNTER - TRANSACT IN BILLS PAYMENT;
+                        //        INSTITUTIONAL CODE: 1054;
+                        //        BILLER NAME - SOUTHWESTERN UNIVERSITY INC.
+                        //     B. ONLINE BANKING - PROCESS YOUR PAYMENT IN BILLS PAYMENT;
+                        //        BILLER NAME - SOUTHWESTERN UNIVERSITY INC.
+                            
+                        //     GCASH:
+                        //     A. OVER THE COUNTER - TRANSACT IN PAY BILLS;
+                        //        BILLER NAME - PHINMA EDUCATION OR PHINMA SOUTHWESTERN UNIVERSITY
+                        //        IF ID NUMBER DOES NOT START WITH '05-', PLEASE INDICATE '05-' BEFORE THE ID NUMBER.
+                            
+                        //     ECPAY:
+                        //     A. BILLER NAME - PHINMA EDUCATION
+                        //        IF ID NUMBER DOES NOT START WITH '05-', PLEASE INDICATE '05-' BEFORE THE ID NUMBER.
+                            
+                        //     Thank you for using DocuQuest.
+                            
+                        //     This is an auto-generated email. Please do not reply.
+                        //     ";
+                            
+                        //     if ($mailCreatedDocs->send())
+                        //     {
+                        //         $response = [
+                        //             'status' => '1',
+                        //             'message' => 'New document added to categories_docs successfully.',
+                        //         ];
+                        //     }
+                        // } catch(Exception $e) {
+                        //     $response = [
+                        //         'status'=>0,
+                        //         'message'=> "Email could not be sent to logged in staff. Mailer Error: {$mailCreatedDocs->ErrorInfo}",
+                        //     ];
+                        // }
+                        
                         // Return success message as a JSON response
-                        $response = ['status' => 1, 'message' => "Document added to categories_docs successfully."];
+                        $response = ['status' => 1, 'message' => "New document added to categories_docs successfully."];
                     } else {
                         // Return failure message if insertion fails
                         $response = ['status' => 0, 'message' => "Failed to add document to categories_docs."];

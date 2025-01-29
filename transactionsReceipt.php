@@ -63,8 +63,8 @@ switch ($method) {
 
           try {
             $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':fileReceipt', $fileContent, PDO::PARAM_LOB);
-            // $stmt->bindParam(':fileReceipt', $base64EncodedFile, PDO::PARAM_STR);
+            // $stmt->bindParam(':fileReceipt', $fileContent, PDO::PARAM_LOB);
+            $stmt->bindParam(':fileReceipt', $base64EncodedFile, PDO::PARAM_STR); // include prefix in the string
             $stmt->bindParam(':refNumber', $refNumber, PDO::PARAM_STR);
             $stmt->bindParam(':trackingName', $trackingName, PDO::PARAM_STR);
 

@@ -30,7 +30,11 @@ switch ($method) {
 
         // echo json_encode($response);
         break;
-        
+    
+    case 'POST':
+
+        break;
+    
     case 'PATCH':
         $transaction = json_decode(file_get_contents('php://input'), true);
         
