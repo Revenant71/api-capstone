@@ -17,18 +17,35 @@ $db_connection = $db_attempt->connect();
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
+        // TODO refer to transactions overdue on how to parse array
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3] ?? null;
 
-        if (!$found_reference_no || empty($transaction['owner_lastname']) || empty($transaction['statusTransit'])) {
-            echo json_encode(['status' => 0, 'message' => 'Invalid reference number, owner lastname, or missing statusTransit']);
+        $lastname_owner = $_GET['lastname_owner'] ?? null;
+
+        if (!$found_reference_no || !$lastname_owner) {
+            echo json_encode(['status' => 0, 'message' => 'Invalid reference number or owner lastname']);
             exit;
         }
 
+        try {
+            $qy = "SELECT statusTransit FROM transactions WHERE reference_number=:reference AND lastname_owner=:lastname_owner";
+            $stmt = $db_connection->prepare($qy);
+            $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
+            $stmt->bindParam(':lastname_owner', $lastname_owner, PDO::PARAM_STR);
+            $stmt->execute();
+    
+            $data = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$data) {
+                echo json_encode(['status' => 0, 'message' => 'No matching transaction found']);
+                exit;
+            }
 
-        // TODO fetch
-
-        // echo json_encode($response);
+            echo json_encode($data);
+        } catch (PDOException $e) {
+            echo json_encode(['status' => 0, 'message' => 'Database error', 'error' => $e->getMessage()]);
+        }
         break;
     
     case 'POST':

@@ -9,7 +9,6 @@ header("Access-Control-Allow-Methods: GET, POST ");
 $db_attempt = new connectDb;
 $db_connection = $db_attempt->connect();
 
-// TODO
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
     case 'GET':
@@ -36,8 +35,8 @@ switch ($method) {
             exit;
         }
 
-        // Limit to 10MB
-        // if ($file['size'] > 10 * 1024 * 1024) { 
+        // Limit to 20MB
+        // if ($file['size'] > 20 * 1024 * 1024) { 
         //     echo json_encode(['success' => false, 'message' => 'File is too large.']);
         //     exit;
         // }

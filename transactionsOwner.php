@@ -146,6 +146,7 @@ switch ($method){
         
                 if ($data) {
                     // Convert longblob to Base64
+                    // TODO copy return image logic from GET
                     foreach ($data as &$row) {
                         if (isset($row['file_receipt'])) {
                             // Check if the prefix is incorrect
