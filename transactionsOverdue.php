@@ -73,38 +73,87 @@ switch($method){
         break;
     case 'PATCH':
         $transaction = json_decode(file_get_contents('php://input'), true);
+            
+            $URI_array = explode('/', $_SERVER['REQUEST_URI']);
+            $found_reference_no = $URI_array[3] ?? null;
+            
+            if (!$found_reference_no || empty($transaction['owner_lastname']) || empty($transaction['overdue_days']) || empty($transaction['last_overdue_update'])) {
+                echo json_encode([
+                    'status' => 0,
+                    'message' => 'Invalid request parameters',
+                    'received_data' => $transaction
+                ]);
+                exit;
+            }
         
-        $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-        $found_reference_no = $URI_array[3] ?? null;
+            try {
+                $db_connection->beginTransaction();
         
-        if (!$found_reference_no || empty($transaction['owner_lastname']) || empty($transaction['owner_firstname']) || empty($transaction['overdue_days']) || empty($transaction['staff']) || empty($transaction['requestor_email']) || empty($transaction['service']) || empty($transaction['selected_docs'])){
-            echo json_encode(['status' => 0, 'message' => 'Invalid reference number, owner lastname, owner firstname, requestor email, service type, or selected docs']);
-        }
+                // Fetch overdue_days and updated_overdue with FOR UPDATE
+                $qy = "SELECT overdue_days, updated_overdue FROM transactions WHERE reference_number = :reference AND lastname_owner = :lastname_owner FOR UPDATE";
+                $stmt = $db_connection->prepare($qy);
+                $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
+                $stmt->bindParam(':lastname_owner', $transaction['owner_lastname'], PDO::PARAM_STR);
+                $stmt->execute();
         
-        // TODO check "status tracking update"
-
-        // try {
-
-        // } catch (PDOException $e) {
-
-        // }
-
-
-        $qy = "UPDATE transactions SET id_employee = :id_employee, overdue_days = :overdue_days WHERE reference_number = :reference AND lastname_owner = :lastname_owner";
-        $stmt = $db_connection->prepare($qy);
-        $stmt->bindParam(':id_employee', $transaction['staff'], PDO::PARAM_INT);
-        $stmt->bindParam(':overdue_days', $transaction['overdue_days'], PDO::PARAM_INT);
-        $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
-        $stmt->bindParam(':lastname_owner', $transaction['owner_lastname'], PDO::PARAM_STR);
-     
-        if($stmt->execute()){
-
-            $response = ['status'=>1, 'message'=>`PATCH overdue_days successful!`];
-        } else {
-            $response = ['status'=>0, 'message'=>'PATCH '. htmlspecialchars($found_reference_no) . ' overdue_days failed!'];
-        }
-
-        // echo json_encode($response)
-        break;    
+                $data = $stmt->fetch(PDO::FETCH_ASSOC);
+                if (!$data) {
+                    $db_connection->rollBack();
+                    echo json_encode(['status' => 0, 'message' => 'Transaction not found', 'received_data' => $transaction]);
+                    exit;
+                }
+        
+                // Explicitly set timezone to Asia/Manila
+                $lastUpdatedOverdue = $data['updated_overdue'] ? new DateTime($data['updated_overdue'], new DateTimeZone('Asia/Manila')) : null;
+                $currentDate = new DateTime("now", new DateTimeZone('Asia/Manila'));
+        
+                // Fix: Compare only the DATE, ignoring time differences
+                if (!$lastUpdatedOverdue || $lastUpdatedOverdue->format('Y-m-d') < $currentDate->format('Y-m-d')) {
+                    $update_qy = "UPDATE transactions 
+                                  SET overdue_days = :overdue_days, updated_overdue = :updated_overdue 
+                                  WHERE reference_number = :reference AND lastname_owner = :lastname_owner";
+        
+                    $stmt = $db_connection->prepare($update_qy);
+                    $stmt->bindParam(':overdue_days', $transaction['overdue_days'], PDO::PARAM_INT);
+                    $stmt->bindParam(':updated_overdue', $transaction['last_overdue_update'], PDO::PARAM_STR);
+                    $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
+                    $stmt->bindParam(':lastname_owner', $transaction['owner_lastname'], PDO::PARAM_STR);
+                    
+                    if ($stmt->execute()) {
+                        $db_connection->commit();
+                        echo json_encode([
+                            'status' => 1,
+                            'message' => 'Overdue days updated',
+                            'updated_data' => [
+                                'reference' => $found_reference_no,
+                                'owner_lastname' => $transaction['owner_lastname'],
+                                'overdue_days' => $transaction['overdue_days'],
+                                'last_overdue_update' => $transaction['last_overdue_update']
+                            ]
+                        ]);
+                    } else {
+                        $db_connection->rollBack();
+                        echo json_encode([
+                            'status' => 0,
+                            'message' => 'Database update failed',
+                            'received_data' => $transaction
+                        ]);
+                    }
+                } else {
+                    $db_connection->rollBack();
+                    echo json_encode([
+                        'status' => 0,
+                        'message' => 'Overdue days already updated today',
+                        // 'overdue_days' => $transaction['overdue_days'],
+                        // 'last_overdue_update' => $transaction['last_overdue_update'],
+                        // 'current_db_data' => $data
+                    ]);
+                }
+            } catch (PDOException $e) {
+                $db_connection->rollBack();
+                echo json_encode(['status' => 0, 'message' => 'Database error', 'error' => $e->getMessage()]);
+            }
+        break;
+           
 }
 ?>
