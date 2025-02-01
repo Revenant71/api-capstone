@@ -238,48 +238,59 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
             }
             break;
 
-            case 'PATCH':
-                $category = json_decode(file_get_contents('php://input'));
-                $URI_array = explode('/', $_SERVER['REQUEST_URI']);
-                $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
+        case 'PATCH':
+            $category = json_decode(file_get_contents('php://input'));
+            $URI_array = explode('/', $_SERVER['REQUEST_URI']);
+            $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
             
-                if ($found_id && is_numeric($found_id)) {
-                    // Update query for editing an existing record
-                    $qy = "UPDATE categories_docs SET 
-                               name=:name, 
-                               price=:price, 
-                               processing_days=:processing_days, 
-                               luzon_price=:luzon_price, 
-                               visayas_price=:visayas_price, 
-                               mindanao_price=:mindanao_price, 
-                               updated_at=:updated 
-                           WHERE id=:id";
-                    $stmt = $db_connection->prepare($qy);
-            
-                    $updated_at = date('Y-m-d H:i:s');
-                    $empty_int = 0;
+            if ($found_id && is_numeric($found_id)) {
+                // Update query for editing an existing record
+                $qy = "UPDATE categories_docs SET 
+                name=:name, 
+                price=:price, 
+                processing_days=:processing_days, 
+                luzon_price=:luzon_price, 
+                visayas_price=:visayas_price, 
+                mindanao_price=:mindanao_price, 
+                updated_at=:updated";
+    
+            // Check if 'hidden' property is present before adding to the query
+            if (isset($category->hidden)) {
+                $qy .= ", hidden=:hidden";
+            }
+    
+            $qy .= " WHERE id=:id";
 
-                    // Bind values based on the data received from the frontend
-                    $stmt->bindParam(':id', $found_id);
-                    $stmt->bindParam(':name', $category->name);  
-                    $stmt->bindParam(':price', $category->price);  
-                    $stmt->bindParam(':processing_days', $category->processing_days);  
-                    $stmt->bindParam(':updated', $updated_at);
-                    $stmt->bindParam(':luzon_price', $empty_int);  
-                    $stmt->bindParam(':visayas_price', $empty_int);  
-                    $stmt->bindParam(':mindanao_price', $empty_int);  
+            $stmt = $db_connection->prepare($qy);
+
+            $updated_at = date('Y-m-d H:i:s');
+            $empty_int = 0;
+
+            // Bind values based on the data received from the frontend
+            $stmt->bindParam(':id', $found_id);
+            $stmt->bindParam(':name', $category->name);  
+            $stmt->bindParam(':price', $category->price);  
+            $stmt->bindParam(':processing_days', $category->processing_days);  
+            $stmt->bindParam(':updated', $updated_at);
+            $stmt->bindParam(':luzon_price', $empty_int);  
+            $stmt->bindParam(':visayas_price', $empty_int);  
+            $stmt->bindParam(':mindanao_price', $empty_int);  
             
-                    if ($stmt->execute()) {
-                        $response = ['status' => 1, 'message' => 'Document category updated successfully.'];
-                    } else {
-                        $response = ['status' => 0, 'message' => 'Failed to update document category.'];
-                    }
-                } else {
-                    $response = ['status' => 0, 'message' => 'Invalid or missing ID for update.'];
-                }
+              if (isset($category->hidden)) {
+                $stmt->bindParam(':hidden', $category->hidden);
+              }
+
+              if ($stmt->execute()) {
+                $response = ['status' => 1, 'message' => 'Document category updated successfully.'];
+              } else {
+                $response = ['status' => 0, 'message' => 'Failed to update document category.'];
+              }
+            } else {
+                $response = ['status' => 0, 'message' => 'Invalid or missing ID for update.'];
+            }
             
-                echo json_encode($response);
-                break;            
+            echo json_encode($response);
+            break;            
             
         
         case 'DELETE':
