@@ -47,17 +47,18 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
                 error_log(print_r($data, true));
         
                 // Validate the data
-                if (isset($data['name'], $data['price'], $data['processing_days'])) {
+                if (isset($data['name'], $data['price'], $data['processing_days'], $data['pages'])) {
                     // SQL query to insert the document into categories_docs
-                    $qy = "INSERT INTO categories_docs(name, price, processing_days, luzon_price, visayas_price, mindanao_price) 
-                           VALUES(:name, :price, :processing_days, :luzon_price, :visayas_price, :mindanao_price)";
+                    $qy = "INSERT INTO categories_docs(name, price, processing_days, pages, luzon_price, visayas_price, mindanao_price) 
+                           VALUES(:name, :price, :processing_days, :pages, :luzon_price, :visayas_price, :mindanao_price)";
                 
                     $empty_int = 0;
 
                     $stmt = $db_connection->prepare($qy);
                     $stmt->bindParam(':name', $data['name']);
                     $stmt->bindParam(':price', $data['price']);
-                    $stmt->bindParam(':processing_days', $data['processing_days']);
+                    $stmt->bindParam(':processing_days', $data['processing_days'], PDO::PARAM_INT);
+                    $stmt->bindParam(':pages', $data['pages'], PDO::PARAM_INT);
                     $stmt->bindParam(':luzon_price', $empty_int);
                     $stmt->bindParam(':visayas_price', $empty_int);
                     $stmt->bindParam(':mindanao_price', $empty_int);
@@ -244,11 +245,14 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
             $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
             
             if ($found_id && is_numeric($found_id)) {
+                $hidden = isset($category->hidden) ? (int)$category->hidden : 0;
+
                 // Update query for editing an existing record
                 $qy = "UPDATE categories_docs SET 
                 name=:name, 
                 price=:price, 
-                processing_days=:processing_days, 
+                processing_days=:processing_days,
+                pages=:pages, 
                 luzon_price=:luzon_price, 
                 visayas_price=:visayas_price, 
                 mindanao_price=:mindanao_price, 
@@ -270,7 +274,8 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
             $stmt->bindParam(':id', $found_id);
             $stmt->bindParam(':name', $category->name);  
             $stmt->bindParam(':price', $category->price);  
-            $stmt->bindParam(':processing_days', $category->processing_days);  
+            $stmt->bindParam(':processing_days', $category->processing_days, PDO::PARAM_INT);
+            $stmt->bindParam(':pages', $category->pages, PDO::PARAM_INT);  
             $stmt->bindParam(':updated', $updated_at);
             $stmt->bindParam(':luzon_price', $empty_int);  
             $stmt->bindParam(':visayas_price', $empty_int);  
