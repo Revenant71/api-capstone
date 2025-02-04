@@ -109,7 +109,7 @@ switch ($method) {
         // ob_clean();
         echo json_encode($data);
         break;
-        
+    // TODO column payment_channel
     case 'POST':
         // TODO encType="multipart/form-data
         $transaction = json_decode(file_get_contents('php://input'), true);
@@ -128,7 +128,7 @@ switch ($method) {
             course, course_year, year_last,
             purpose_req, selected_docs,
             statusPayment, statusTransit, id_employee, overdue_days, 
-            created_at, updated_at
+            created_at, updated_at, payment_channel
             " . (!empty($transaction['name_middle']) ? ", middlename_owner" : "") . "
             " . (!empty($transaction['id_swu']) ? ", id_swu" : "") . "
             " . (!empty($transaction['desc_req']) ? ", desc_req" : "") . "
@@ -144,7 +144,7 @@ switch ($method) {
             :course, :course_year, :year_last, 
             :purpose_req, :selected_docs,
             :statusPayment, :statusTransit, :id_employee, :overdue_days, 
-            :created_at, :updated_at
+            :created_at, :updated_at, :payment_channel
             " . (!empty($transaction['name_middle']) ? ", :middlename_owner" : "") . "
             " . (!empty($transaction['id_swu']) ? ", :id_swu" : "") . "
             " . (!empty($transaction['desc_req']) ? ", :desc_req" : "") . "
@@ -186,6 +186,7 @@ switch ($method) {
             ':course_year' => $transaction['course_year'],
             ':year_last' => $transaction['year_last'],
             ':purpose_req' => $transaction['purpose'],
+            ':payment_channel' => $transaction['payment_method'],
             ':selected_docs' => $selectedDocsJson
         ];
 
@@ -220,7 +221,7 @@ switch ($method) {
         
         echo json_encode($response);
         break;
-        
+    
     case 'PATCH':
         $transaction = json_decode(file_get_contents('php://input'), true);
 
@@ -257,8 +258,9 @@ switch ($method) {
             year_last = :year_last,
             purpose_req = :purpose_req,
             id_employee = :id_employee,
-            updated_at = NOW()
+            updated_at = NOW(),
         ";
+        // payment_channel = :payment_channel,
 
         if (!empty($transaction['statusPayment'])) {
             $qy .= ", statusPayment = :statusPayment";
@@ -320,6 +322,7 @@ switch ($method) {
             ':purpose_req' => $transaction['purpose'],
             ':id_employee' => $transaction['staff'],
         ];
+        // ':payment_channel' => $transaction['payment_method'],
 
         if (!empty($transaction['statusPayment'])) {
             $transaction_values[':statusPayment'] = $transaction['status_payment'];

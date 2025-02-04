@@ -48,7 +48,7 @@ switch ($method) {
                 $mailRequest->addReplyTo(REPLY_TO, REPLY_TO_NAME);
                 $mailRequest->isHTML(true);
                 $mailRequest->Subject = 'Document Request Confirmation';
-                // TODO anchor
+                // TODO $data['payment_method']
                 $mailRequest->Body = '
                     <html>
                         <head>

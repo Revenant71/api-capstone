@@ -11,28 +11,40 @@ $db_connection = $db_attempt->connect();
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method){
     case 'GET':
+        // Extract user ID from the URL
         $URI_array = explode('/', trim($_SERVER['REQUEST_URI'], '/'));
-        $found_user = isset($URI_array[3]) ? intval($URI_array[3]) : null;
-
-        if ($found_user && is_numeric($found_user)) {
-            // get rows where "responded" is 0
-            // TODO in frontend show all but use checkbox to show responded and not responded
-            $qy = "SELECT * FROM notifications WHERE id_user=:id_user AND responded = 0";
-            $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':id_user', $found_user);
-            $stmt->execute();
-            $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-            if ($data) {
-                echo json_encode($data);
-            } else {
-                echo json_encode(['status' => 0, 'message' => 'No data found for user ID ' . $found_user]);
+        $found_user = is_numeric(end($URI_array)) ? intval(end($URI_array)) : null;
+    
+        error_log("Extracted user ID: " . print_r($found_user, true));
+    
+        if ($found_user) {
+            try {
+                // Log before query execution
+                error_log("Fetching notifications for user ID: " . $found_user);
+    
+                $qy = "SELECT * FROM notifications WHERE id_user = :id_user AND responded = 0";
+                $stmt = $db_connection->prepare($qy);
+                $stmt->bindParam(':id_user', $found_user, PDO::PARAM_INT);
+                $stmt->execute();
+                $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+                error_log("Query executed successfully, rows found: " . count($data));
+    
+                if (!empty($data)) {
+                    echo json_encode($data);
+                } else {
+                    echo json_encode(['status' => 0, 'message' => 'No notifications found for user ID ' . $found_user]);
+                }
+            } catch (PDOException $e) {
+                error_log("Database error: " . $e->getMessage());
+                echo json_encode(['status' => 0, 'message' => 'Database error: ' . $e->getMessage()]);
             }
-
         } else {
-            echo json_encode(['status' => 0, 'message' => 'Invalid or missing user ID ' . $found_user]);
+            error_log("Invalid user ID detected in GET request");
+            echo json_encode(['status' => 0, 'message' => 'Invalid or missing user ID']);
         }
         break;
+    
 
     case 'POST':
         $input = json_decode(file_get_contents('php://input'));
