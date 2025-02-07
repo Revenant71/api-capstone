@@ -30,7 +30,6 @@ switch ($method){
             FROM transactions TCN
             LEFT JOIN documents DOC ON TCN.id_doc = DOC.id
             WHERE TCN.reference_number = :reference AND TCN.lastname_owner = :lastname_owner;
-            
             ";
     
             try {

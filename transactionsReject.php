@@ -23,14 +23,14 @@ switch ($method){
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3] ?? null;
 
-        if (!$found_reference_no || empty($transaction['reason']) || empty($transaction['remarks']) || empty($transaction['staff']) || empty($transaction['owner_firstname']) || empty($transaction['requestor_email']) || empty($transaction['reason']) || empty($transaction['remarks'])) {
-            echo json_encode(['status' => 0, 'message' => 'Invalid staff, reference number, reason, remarks owner firstname, requestor email, reason, or remarks']);
+        if (!$found_reference_no || empty($transaction['reason']) || empty($transaction['remarks']) || empty($transaction['staff']) || empty($transaction['owner_firstname']) || empty($transaction['owner_lastname']) || empty($transaction['requestor_email']) || empty($transaction['reason']) || empty($transaction['remarks']) || empty($transaction['receipt'])) {
+            echo json_encode(['status' => 0, 'message' => 'Invalid staff, reference number, reason, remarks, owner firstname, owner lastname, requestor email, reason, or remarks']);
             exit;
         }
 
         $qy = "UPDATE transactions 
-        SET statusTransit = :statusTransit, id_employee = :id_employee, reason_reject = :reason_reject, remarks = :remarks, updated_at = NOW() 
-        WHERE reference_number = :reference AND firstname_owner = :firstname_owner";
+        SET statusTransit = :statusTransit, file_receipt = NULL, id_employee = :id_employee, reason_reject = :reason_reject, remarks = :remarks, updated_at = NOW() 
+        WHERE reference_number = :reference AND lastname_owner = :lastname_owner";
         
         $status_rejected = "Rejected";
 
@@ -40,7 +40,7 @@ switch ($method){
         $stmt->bindParam(':remarks', $transaction['remarks'], PDO::PARAM_STR);
         $stmt->bindParam(':id_employee', $transaction['staff'], PDO::PARAM_INT);
         $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
-        $stmt->bindParam(':firstname_owner', $transaction['owner_firstname'], PDO::PARAM_STR);
+        $stmt->bindParam(':lastname_owner', $transaction['owner_lastname'], PDO::PARAM_STR);
         
         if($stmt->execute()){
             try {
@@ -58,8 +58,15 @@ switch ($method){
                 $mailReject->addReplyTo(REPLY_TO, REPLY_TO_NAME);
                 $mailReject->isHTML(true);
                 $mailReject->Subject = $found_reference_no . ' DocuQuest Rejected';
-                // TODO external css as ' . $css . '
-                // TODO $transaction['receipt'] as html image
+  
+                if (!empty($transaction['receipt'])) {
+                    $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $transaction['receipt']));
+                
+                    // Attach image directly from memory without saving it
+                    $mailReject->addStringEmbeddedImage($imageData, 'receipt_cid', 'receipt_'. $found_reference_no .'.png', 'base64', 'image/png');
+                }
+                
+
                 $mailReject->Body = '
                     <html>
                         <head>
@@ -119,6 +126,11 @@ switch ($method){
                             <em>Below are the details for this course of action:</em>
                             <table>
                                 <tr>
+                                    <td colspan="2" style="text-align: center;">
+                                        <img src="cid:receipt_cid" title="Your previous receipt" alt="Receipt Image" style="max-width: 30%; max-height: 50%; height: auto; display: block; margin: 0 auto;">
+                                    </td>
+                                </tr>
+                                <tr>
                                     <th>Reason</th>
                                     <td>'.$transaction['reason'].'</td>
                                 </tr>
@@ -131,7 +143,8 @@ switch ($method){
                             <br/>
                             <strong>You can reach out to the Registrar\'s Office for further actions upon receiving this message.</strong>
                             <br/>
-                            <p>To make a new request, please proceed to <a href="http://localhost:3000/start" target="_blank" title="Click here to make a new document request instead.">this link</a>.</p>
+                            <p>Your previous submitted receipt has been deleted.</p>
+                            <p>To upload a new receipt for your request, please proceed to <a href="http://localhost:3000/start" target="_blank" title="Click here to upload a new receipt.">this link</a>.</p>
                             <h3>This is an auto-generated email. <em>Please do not reply.</em></h3>
                         </body>
                     </html>

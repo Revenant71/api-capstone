@@ -22,7 +22,7 @@ switch ($method){
                 // Log before query execution
                 error_log("Fetching notifications for user ID: " . $found_user);
     
-                $qy = "SELECT * FROM notifications WHERE id_user = :id_user AND responded = 0";
+                $qy = "SELECT * FROM notifications WHERE id_user = :id_user AND responded = 0  ORDER BY created_at DESC";
                 $stmt = $db_connection->prepare($qy);
                 $stmt->bindParam(':id_user', $found_user, PDO::PARAM_INT);
                 $stmt->execute();
@@ -86,8 +86,9 @@ switch ($method){
     case 'PATCH':
         $input = json_decode(file_get_contents('php://input'));
         
-        if (!empty($input->user_id) && !empty($input->notif_id) && !empty($input->type) && !empty($input->message)) {
+        if (!empty($input->responded) && !empty($input->notif_id) && !empty($input->user_id) && !empty($input->type) && !empty($input->message)) {
           try {
+            // TODO make query dynamic
             $qy = "UPDATE notifications 
                    SET type = :type, 
                        message = :message, 

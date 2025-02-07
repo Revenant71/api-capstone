@@ -31,16 +31,15 @@ switch ($method){
         $found_reference_no = $URI_array[3] ?? null;
 
         // empty($transaction['reference']) ||
-        if (!$found_reference_no || empty($transaction['staff']) || empty($transaction['owner_lastname']) || empty($transaction['owner_firstname']) ||  empty($transaction['requestor_email']) || empty($transaction['status_transit']) || empty($transaction['release_date']) || empty($transaction['service']) || empty($transaction['selected_docs'])) {
-            echo json_encode(['status' => 0, 'message' => 'Invalid reference number, staff, owner lastname, requestor email, statusTransit, or selected docs']);
+        if (!$found_reference_no || empty($transaction['staff']) || empty($transaction['owner_lastname']) || empty($transaction['owner_firstname']) ||  empty($transaction['requestor_email']) || empty($transaction['release_date']) || empty($transaction['service']) || empty($transaction['selected_docs'])) {
+            echo json_encode(['status' => 0, 'message' => 'Invalid reference number, staff, owner lastname, owner firstname, requestor email, service, or selected docs']);
         }
 
         $qy = "UPDATE transactions 
-        SET released_at = :released_at, statusTransit = :statusTransit, id_employee = :id_employee, updated_at = NOW()";
+        SET released_at = :released_at, id_employee = :id_employee, updated_at = NOW()";
 
         $params = [
             ':released_at' => $transaction['release_date'],
-            ':statusTransit' => $transaction['status_transit'],
             ':id_employee' => $transaction['staff'],
             ':reference' => $found_reference_no,
             ':lastname_owner' => $transaction['owner_lastname']
