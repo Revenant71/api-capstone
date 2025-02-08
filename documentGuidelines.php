@@ -32,10 +32,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         if ($result) {
-            file_put_contents('debug_log.txt', '[' . date('Y-m-d H:i:s') . "] Fetched Data: " . json_encode($result) . PHP_EOL, FILE_APPEND);
+            //file_put_contents('debug_log.txt', '[' . date('Y-m-d H:i:s') . "] Fetched Data: " . json_encode($result) . PHP_EOL, FILE_APPEND);
             sendJsonResponse("success", "Data fetched successfully", $result);
         } else {
-            file_put_contents('debug_log.txt', '[' . date('Y-m-d H:i:s') . "] No Data Found" . PHP_EOL, FILE_APPEND);
+            //file_put_contents('debug_log.txt', '[' . date('Y-m-d H:i:s') . "] No Data Found" . PHP_EOL, FILE_APPEND);
             sendJsonResponse("error", "No guidelines found");
         }
     } catch (PDOException $e) {

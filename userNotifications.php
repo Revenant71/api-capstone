@@ -51,6 +51,7 @@ switch ($method){
         
         if (!empty($input->user_id) && !empty($input->type) && !empty($input->message)) {
             try {
+                // TODO more random in UUID
                 $qy = "INSERT INTO notifications (id, id_user, type, message, responded, updated_responded, created_at, updated_at) 
                     VALUES (UUID(), :id_user, :type, :message, :responded, :updated_responded, NOW(), NOW())";
                 $stmt = $db_connection->prepare($qy);
