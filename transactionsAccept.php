@@ -69,13 +69,6 @@ switch ($method){
                 $mailAccept->Password = PASSWORD;
                 $mailAccept->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
                 $mailAccept->Port = 587;
-                /*
-                 $transaction['service']
-                 $transaction['region']
-                 $transaction['delivery_city']
-                 $transaction['delivery_district']
-                 $transaction['delivery_street']
-                */
                 $selectedDocsRows = '';
                 if (!empty($transaction['selected_docs']) && is_array($transaction['selected_docs'])) {
                     foreach ($transaction['selected_docs'] as $doc) {
