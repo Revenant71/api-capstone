@@ -51,20 +51,33 @@ switch ($method){
         
         if (!empty($input->user_id) && !empty($input->type) && !empty($input->message)) {
             try {
-                // TODO more random in UUID
+
+                function generateUUID() {
+                    return sprintf(
+                        '%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+                        mt_rand(0, 0xffff), mt_rand(0, 0xffff),
+                        mt_rand(0, 0xffff),
+                        mt_rand(0, 0x0fff) | 0x4000,
+                        mt_rand(0, 0x3fff) | 0x8000,
+                        mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
+                    );
+                }
+
+                $uuid = generateUUID();
+
                 $qy = "INSERT INTO notifications (id, id_user, type, message, responded, updated_responded, created_at, updated_at) 
-                    VALUES (UUID(), :id_user, :type, :message, :responded, :updated_responded, NOW(), NOW())";
+                    VALUES (:uuid, :id_user, :type, :message, :responded, :updated_responded, NOW(), NOW())";
                 $stmt = $db_connection->prepare($qy);
     
                 if ($stmt){
                     $hardcoded_responded = 0;
                     $hardcoded_responded_at = null;
 
+                    $stmt->bindParam(':uuid', $uuid, PDO::PARAM_STR);
                     $stmt->bindParam(':id_user', $input->user_id, PDO::PARAM_INT);
                     $stmt->bindParam(':type', $input->type, PDO::PARAM_STR);
                     $stmt->bindParam(':message', $input->message, PDO::PARAM_STR);
                     $stmt->bindParam(':responded', $hardcoded_responded, PDO::PARAM_INT);
-                    // $stmt->bindValue(':updated_responded', null, PDO::PARAM_NULL);
                     $stmt->bindParam(':updated_responded', $hardcoded_responded_at, PDO::PARAM_NULL);
 
                     if ($stmt->execute()) {
@@ -86,14 +99,16 @@ switch ($method){
 
     case 'PATCH':
         $input = json_decode(file_get_contents('php://input'));
-        
-        if (!empty($input->responded) && !empty($input->notif_id) && !empty($input->user_id) && !empty($input->type) && !empty($input->message)) {
+        //  && !empty($input->type) && !empty($input->message)
+        if (!empty($input->responded) && !empty($input->notif_id) && !empty($input->user_id)) {
           try {
             // TODO make query dynamic
+            
+            // message = :message, 
+            // type = :type,
             $qy = "UPDATE notifications 
-                   SET type = :type, 
-                       message = :message, 
-                       responded = :responded, 
+                   SET  
+                       responded = :responded,
                        updated_responded = CASE WHEN :responded = 1 THEN NOW() ELSE updated_responded END, 
                        updated_at = NOW()
                    WHERE id = :notif_id AND id_user = :id_user";
@@ -103,8 +118,8 @@ switch ($method){
             if ($stmt) {
                 $stmt->bindParam(':notif_id', $input->notif_id, PDO::PARAM_STR);
                 $stmt->bindParam(':id_user', $input->user_id, PDO::PARAM_INT);
-                $stmt->bindParam(':type', $input->type, PDO::PARAM_STR);
-                $stmt->bindParam(':message', $input->message, PDO::PARAM_STR);
+                // $stmt->bindParam(':type', $input->type, PDO::PARAM_STR);
+                // $stmt->bindParam(':message', $input->message, PDO::PARAM_STR);
 
                 // Check if responded value is provided, otherwise default to 0 (not responded)
                 $responded_value = isset($input->responded) ? (int)$input->responded : 0;
