@@ -1,4 +1,5 @@
 <?php
+session_start();
 require_once('connectDb.php');
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
@@ -6,7 +7,6 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-W
 header("Access-Control-Allow-Methods: POST");
 header("Access-Control-Allow-Credentials: true");
 
-session_start();
     $db_attempt = new connectDb;
     $db_connection = $db_attempt->connect(); 
 
@@ -53,6 +53,9 @@ session_start();
                         'status'=>1,
                         'message'=>'Login staff successful.',
                         'fullname'=>$_SESSION['fullname_user'],
+                        // 'firstname'=>$_SESSION['firstname_user'],
+                        // 'middlename'=>$_SESSION['middlename_user'],
+                        // 'lastname'=>$_SESSION['lastname_user'],
                         'id'=>$_SESSION['id_user'],
                         'role'=>$_SESSION['role_user'],
                         // 'status_user'=>$_SESSION['status_user']
