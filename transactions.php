@@ -118,7 +118,8 @@ switch ($method) {
         // released_at,
         // :released_at,
         $selectedDocsJson = !empty($transaction['selectedDocuments']) ? json_encode($transaction['selectedDocuments']) : '[]';
-
+        $purposeJson = !empty($transaction['purpose']) ? json_encode($transaction['purpose']) : '[]';
+        
         $qy = "
         INSERT INTO transactions (
             reference_number, service_type, delivery_region,
@@ -165,7 +166,6 @@ switch ($method) {
             ':created_at' => date('Y-m-d H:i:s'),
             ':updated_at' => date('Y-m-d H:i:s'),
         ];
-        // $transaction['selectedDocuments']
         
         $transaction_values = [
             ':reference_number' => $transaction['reference_number'],
@@ -185,7 +185,7 @@ switch ($method) {
             ':course' => $transaction['course'],
             ':course_year' => $transaction['course_year'],
             ':year_last' => $transaction['year_last'],
-            ':purpose_req' => $transaction['purpose'],
+            ':purpose_req' => $purposeJson,
             ':payment_channel' => $transaction['payment_method'],
             ':selected_docs' => $selectedDocsJson
         ];
@@ -256,7 +256,6 @@ switch ($method) {
             course = :course,
             course_year = :course_year,
             year_last = :year_last,
-            purpose_req = :purpose_req,
             id_employee = :id_employee,
             updated_at = NOW(),
         ";
@@ -319,7 +318,6 @@ switch ($method) {
             ':course' => $transaction['owner_course'],
             ':course_year' => $transaction['owner_course_year'],
             ':year_last' => $transaction['owner_year_last'],
-            ':purpose_req' => $transaction['purpose'],
             ':id_employee' => $transaction['staff'],
         ];
         // ':payment_channel' => $transaction['payment_method'],
