@@ -1,5 +1,6 @@
 <?php
 session_start();
+session_regenerate_id(true);
 require_once('connectDb.php');
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");

@@ -66,8 +66,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             // email_verified_at,
             // :verified,
 
-            // TODO hardcode status as deactivated, when clicking on hyperlink in email, go to new component to change status as active
-            $qy = "INSERT INTO users(img_profile,
+            $qy = "INSERT INTO users(
             firstname, middlename, lastname,
             email, phone, password, account_type, 
             created_at, updated_at) 
@@ -76,17 +75,17 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             :email, :phone, :pass, :role,
             :created, :updated)";
             
-            // TODO insert pfp for new users
-            if (isset($user->profilePicture)) {
-                // Extract the Base64 part and validate MIME type
-                if (preg_match('/^data:(image\/\w+);base64,/', $user->profilePicture, $type)) {
-                    $mimeType = $type[1]; // e.g., image/png
-                    $foundPicture = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $user->profilePicture));
-                } else {
-                    echo json_encode(['status' => 0, 'message' => 'Invalid image format']);
-                    exit;
-                }
-            }
+            // TODO insert default pfp for new users
+            // if (isset($user->profilePicture)) {
+            //     // Extract the Base64 part and validate MIME type
+            //     if (preg_match('/^data:(image\/\w+);base64,/', $user->profilePicture, $type)) {
+            //         $mimeType = $type[1]; // e.g., image/png
+            //         $foundPicture = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $user->profilePicture));
+            //     } else {
+            //         echo json_encode(['status' => 0, 'message' => 'Invalid image format']);
+            //         exit;
+            //     }
+            // }
 
             if (!isset($user->staffPass)) {
                 echo json_encode(['status' => 0, 'message' => 'Password is required', 'data' => $user]);
@@ -99,7 +98,6 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $updated_at = date('Y-m-d H:i:s');
 
             $stmt = $db_connection->prepare($qy);
-            $stmt->bindParam(':pfp', $foundPicture, PDO::PARAM_LOB);
             $stmt->bindParam(':firstname', $user->staffFirstName);
             $stmt->bindParam(':middlename', $user->staffMiddleName);
             $stmt->bindParam(':lastname', $user->staffLastName);
@@ -177,7 +175,6 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                             'message' => 'User created successfully',
                             'newUser' => [
                                 'id' => $db_connection->lastInsertId(),
-                                'pfp' => $foundPicture,
                                 'name' => $user->staffLastName . ', ' . $user->staffFirstName . ' ' . $user->staffMiddleName,
                                 'email' => $user->staffEmail,
                                 'phone' => $user->staffPhone,
@@ -202,7 +199,6 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             break;
 
         case 'PATCH':
-            // TODO split name into 3 columns
             $user = json_decode(file_get_contents('php://input'));
 
             $URI_array = explode('/', $_SERVER['REQUEST_URI']);
@@ -212,91 +208,68 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 echo json_encode(['status' => 0, 'message' => 'Invalid or missing user ID']);
                 exit;
             }
-            
+
             // default response
             $response = ['status' => 0, 'message' => 'No changes made'];
-
-            // if ($_SERVER['CONTENT_TYPE'] !== 'multipart/form-data') {
-            //     echo json_encode(['status' => 0, 'message' => 'Invalid content type.']);
-            //     exit;
-            // }
-
-            parse_str(file_get_contents("php://input"), $_POST);
-            // FIXME these are always null
-            $name = isset($_POST['staffName']) ? $_POST['staffName'] : null;
-            $email = isset($_POST['staffEmail']) ? $_POST['staffEmail'] : null;
-            $phone = isset($_POST['staffPhone']) ? $_POST['staffPhone'] : null;
-            $role = isset($_POST['staffRole']) ? $_POST['staffRole'] : null;
-
-            // $user->profilePicture
-            $foundPicture = null;
-            if (!empty($_FILES['file_pfp']['tmp_name'])) {
-                $fileTempName = $_FILES['file_pfp']['tmp_name'];
-                $fileMimeType = mime_content_type($fileTempName);
-                
-                // check if file is an image
-                if (strpos($fileMimeType, 'image/') === 0) {
-                    $foundPicture = file_get_contents($fileTempName);
-                } else {
-                    echo json_encode(['status' => 0, 'message' => 'Invalid file type. Only images are allowed.']);
-                    exit;
-                }
-            }
 
             $query = "UPDATE users SET ";   
             $params = [];
             
-            if ($name) {
-                $query .= "name=:name, ";
-                $params[':name'] = $name;
+            if (isset($user->userFirstName)) {
+                $query .= "firstname=:firstname, ";
+                $params[':firstname'] = $user->userFirstName;
             }
-            if ($email) {
+            if (isset($user->userMiddleName)) {
+                $query .= "middlename=:middlename, ";
+                $params[':middlename'] = $user->userMiddleName;
+            }
+            if (isset($user->userLastName)) {
+                $query .= "lastname=:lastname, ";
+                $params[':lastname'] = $user->userLastName;
+            }
+            if (isset($user->userEmail)) {
                 $query .= "email=:email, ";
-                $params[':email'] = $email;
+                $params[':email'] = $user->userEmail;
             }
-            if ($phone) {
+            if (isset($user->userPhone)) {
                 $query .= "phone=:phone, ";
-                $params[':phone'] = $phone;
+                $params[':phone'] = $user->userPhone;
             }
-            if ($role) {
-                $query .= "account_type=:role, ";
-                $params[':role'] = $role;
-            }
-            if ($foundPicture) {
-                $query .= "img_profile=:img_profile, ";
-                $params[':img_profile'] = $foundPicture;
-            }
+            // if (isset($user->userRole)) {
+            //     $query .= "account_type=:role, ";
+            //     $params[':role'] = $user->userRole;
+            // }
             
-            $query .= "updated_at=:updated WHERE id=:id";
+            $query .= "updated_at=:updated, ";
             $params[':updated'] = date('Y-m-d H:i:s');
-            $params[':id'] = $found_id;
+
+            if (!empty($params)) {
+                $query = rtrim($query, ", ") . " WHERE id=:id";
+                $params[':id'] = $found_id;
+            } else {
+                echo json_encode(['status' => 0, 'message' => 'No valid fields to update']);
+                exit;
+            }
             
             try {
               $stmt = $db_connection->prepare($query);
 
                 if ($stmt->execute($params)) {
-                  $response = [
-                  'status' => 1,
-                  'message' => 'User updated',
-                  'data_recieved' => [
-                    'name' => $name,
-                    'email' => $email,
-                    'phone' => $phone,
-                    'role' => $role,
-                    'foundPicture' => $foundPicture
-                  ]];
-                  
-                  // update user successful
-                  $stmt = $db_connection->prepare("SELECT * FROM users WHERE id=:id");
-                  $stmt->bindParam(':id', $found_id);
-                  $stmt->execute();
-                  $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                  $response['data'] = $updatedUser;
-                  //$response = ['status' => 1, 'message' => 'User updated', 'data' => $updatedUser];
+                    if ($stmt->rowCount() > 0) {
+                        // Fetch updated user
+                        $stmt = $db_connection->prepare("SELECT * FROM users WHERE id=:id");
+                        $stmt->bindParam(':id', $found_id);
+                        $stmt->execute();
+                        $updatedUser = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+                        $response = ['status' => 1, 'message' => 'User updated', 'data' => $updatedUser];
+                    } else {
+                        // No actual changes were made
+                        $response = ['status' => 0, 'message' => 'No changes were made'];
+                    }
                 } else {
                   // update user failed
-                  $response = ['status' => 0, 'message' => 'Update user failed!'];
+                  $response = ['status' => 0, 'message' => 'Update user failed! No changes were made'];
                 }
             } catch (PDOException $e) {
                 $response = ['status' => 0, 'message' => 'Database ERROR: ' . $e->getMessage()];
