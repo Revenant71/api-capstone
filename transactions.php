@@ -109,9 +109,8 @@ switch ($method) {
         // ob_clean();
         echo json_encode($data);
         break;
-    // TODO column payment_channel
     case 'POST':
-        // TODO encType="multipart/form-data
+        // TODO optional file_portrait, refer to userPicture.php
         $transaction = json_decode(file_get_contents('php://input'), true);
         // file_portrait,
         // :file_portrait,
@@ -135,6 +134,7 @@ switch ($method) {
             " . (!empty($transaction['desc_req']) ? ", desc_req" : "") . "
             " . (!empty($transaction['delivery_city']) ? ", delivery_city" : "") . "
             " . (!empty($transaction['delivery_district']) ? ", delivery_district" : "") . "
+            " . (!empty($transaction['delivery_brgy']) ? ", delivery_brgy" : "") . "
             " . (!empty($transaction['delivery_street']) ? ", delivery_street" : "") . "
             " . (!empty($transaction['file_portrait']) ? ", file_portrait" : "") . "
         ) VALUES (
@@ -151,6 +151,7 @@ switch ($method) {
             " . (!empty($transaction['desc_req']) ? ", :desc_req" : "") . "
             " . (!empty($transaction['delivery_city']) ? ", :delivery_city" : "") . "
             " . (!empty($transaction['delivery_district']) ? ", :delivery_district" : "") . "
+            " . (!empty($transaction['delivery_brgy']) ? ", :delivery_brgy" : "") . "
             " . (!empty($transaction['delivery_street']) ? ", :delivery_street" : "") . "
             " . (!empty($transaction['file_portrait']) ? ", :file_portrait" : "") . "
         )";
@@ -205,6 +206,9 @@ switch ($method) {
         if (!empty($transaction['delivery_district'])) {
             $transaction_values[':delivery_district'] = $transaction['delivery_district'];
         }
+        if (!empty($transaction['delivery_brgy'])) {
+            $transaction_values[':delivery_brgy'] = $transaction['delivery_brgy'];
+        } 
         if (!empty($transaction['delivery_street'])) {
             $transaction_values[':delivery_street'] = $transaction['delivery_street'];
         }  
@@ -282,6 +286,9 @@ switch ($method) {
         if (!empty($transaction['delivery_district'])) {
             $qy .= ", delivery_district = :delivery_district";
         }
+        if (!empty($transaction['delivery_brgy'])) {
+            $qy .= ", delivery_district = :delivery_brgy";
+        }
         if (!empty($transaction['delivery_street'])) {
             $qy .= ", delivery_street = :delivery_street";
         }
@@ -342,6 +349,9 @@ switch ($method) {
         }
         if (!empty($transaction['delivery_district'])) {
             $transaction_values[':delivery_district'] = $transaction['delivery_district'];
+        }
+        if (!empty($transaction['delivery_brgy'])) {
+            $transaction_values[':delivery_brgy'] = $transaction['delivery_brgy'];
         }
         if (!empty($transaction['delivery_street'])) {
             $transaction_values[':delivery_street'] = $transaction['delivery_street'];

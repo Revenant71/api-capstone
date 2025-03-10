@@ -19,6 +19,16 @@ switch ($method){
         // Retrieve trackingName from query parameters
         $found_lastname = isset($_GET['trackingName']) ? $_GET['trackingName'] : null;
     
+        // Define the file path
+        $logFile = __DIR__ . "/debug_transactionsowner.txt";
+
+        // Prepare the debug output
+        $logData = "Debug Log - " . date("Y-m-d H:i:s") . "\n";
+        $logData .= "Full Request URI: " . $_SERVER['REQUEST_URI'] . "\n";
+        $logData .= "URI Array: " . print_r($URI_array, true) . "\n";
+        $logData .= "Reference Number: " . var_export($found_reference_no, true) . "\n";
+        $logData .= "Last Name: " . var_export($found_lastname, true) . "\n";
+
         if ($found_reference_no && $found_lastname) {
             // AND TCN.statusPayment = 'Not Paid';
             $qy = "
@@ -36,9 +46,15 @@ switch ($method){
                 $stmt = $db_connection->prepare($qy);
                 $stmt->bindParam(':reference', $found_reference_no, PDO::PARAM_STR);
                 $stmt->bindParam(':lastname_owner', $found_lastname, PDO::PARAM_STR);
-                $stmt->execute();
-    
+                // $stmt->execute();
+
+                $executionResult = $stmt->execute();
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                $logData .= "SQL Query: " . $qy . "\n";
+                $logData .= "SQL Execution Result: " . ($executionResult ? 'Success' : 'Failure') . "\n";
+                $logData .= "Rows Fetched: " . count($data) . "\n";
+                $logData .= "Fetched Data: " . print_r($data, true) . "\n";
 
                 if ($data) {
                     foreach ($data as &$row) {
@@ -107,11 +123,19 @@ switch ($method){
                     ]);
                 }
             } catch (PDOException $e) {
+                $errorMsg = 'Database error: ' . $e->getMessage();
+                $logData .= "Database Error: " . $errorMsg . "\n";
                 echo json_encode(['status' => 0, 'message' => 'Database error: ' . $e->getMessage()]);
             }
         } else {
+            $errorMsg = 'Invalid or missing tracking data.';
+            $logData .= "Error: " . $errorMsg . "\n";
             echo json_encode(['status' => 0, 'message' => 'Invalid or missing tracking data.']);
         }
+        $logData .= "-----------------------------------\n";
+
+        // Save the debug output to the file
+        //file_put_contents($logFile, $logData, FILE_APPEND);
         break;
     
 
@@ -145,17 +169,21 @@ switch ($method){
         
                 if ($data) {
                     // Convert longblob to Base64
-                    // TODO copy return image logic from GET
                     foreach ($data as &$row) {
+                        // if (isset($row['file_receipt'])) {
+                        //     // Check if the prefix is incorrect
+                        //     if (str_starts_with($row['file_receipt'], 'dataimage/jpegbase64')) {
+                        //         // Replace the incorrect prefix with the correct one
+                        //         $row['file_receipt'] = str_replace('dataimage/jpegbase64', 'data:image/jpeg;base64,', $row['file_receipt']);
+                        //     } elseif (!str_starts_with($row['file_receipt'], 'data:image/jpeg;base64,')) {
+                        //         // If no prefix or incorrect prefix, encode and add the correct prefix
+                        //         $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
+                        //     }
+                        // }
+
                         if (isset($row['file_receipt'])) {
-                            // Check if the prefix is incorrect
-                            if (str_starts_with($row['file_receipt'], 'dataimage/jpegbase64')) {
-                                // Replace the incorrect prefix with the correct one
-                                $row['file_receipt'] = str_replace('dataimage/jpegbase64', 'data:image/jpeg;base64,', $row['file_receipt']);
-                            } elseif (!str_starts_with($row['file_receipt'], 'data:image/jpeg;base64,')) {
-                                // If no prefix or incorrect prefix, encode and add the correct prefix
-                                $row['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($row['file_receipt']);
-                            }
+                            // Assume the data is already base64-encoded with a prefix
+                            continue;
                         }
                     }
                     

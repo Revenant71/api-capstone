@@ -36,22 +36,26 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 $stmt->execute();
                 $data = $stmt->fetch(PDO::FETCH_ASSOC);
                 
-                if ($data && isset($data['img_profile'])) {
-                    $finfo = new finfo(FILEINFO_MIME_TYPE);
-                    $mimeType = $finfo->buffer($data['img_profile']);
-                    $data['img_profile'] = "data:$mimeType;base64," . base64_encode($data['img_profile']);
+                if ($data) {
+                  foreach ($data as &$row) {
+                    if (isset($row['img_profile'])) {
+                        // Assume the data is already base64-encoded with a prefix
+                        continue;
+                    }
+                  }
                 }
             } else {
                 $stmt = $db_connection->prepare($qy);
                 $stmt->execute();
                 $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-                foreach ($data as &$row) {
+                if ($data) {
+                  foreach ($data as &$row) {
                     if (isset($row['img_profile'])) {
-                        $finfo = new finfo(FILEINFO_MIME_TYPE);
-                        $mimeType = $finfo->buffer($row['img_profile']);
-                        $row['img_profile'] = "data:$mimeType;base64," . base64_encode($row['img_profile']);
+                        // Assume the data is already base64-encoded with a prefix
+                        continue;
                     }
+                  }
                 }
             }
         
