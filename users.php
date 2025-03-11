@@ -74,11 +74,12 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             firstname, middlename, lastname,
             email, phone, password, account_type, 
             created_at, updated_at) 
-            VALUES(:pfp,
+            VALUES(
             :firstname, :middlename, :lastname,
             :email, :phone, :pass, :role,
             :created, :updated)";
-            
+            // :pfp,
+
             // TODO insert default pfp for new users
             // if (isset($user->profilePicture)) {
             //     // Extract the Base64 part and validate MIME type
