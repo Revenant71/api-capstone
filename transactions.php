@@ -213,7 +213,9 @@ switch ($method) {
             $transaction_values[':delivery_street'] = $transaction['delivery_street'];
         }  
         if (!empty($transaction['file_portrait'])) {
-            $transaction_values[':file_portrait'] = $transaction['portrait'];
+            // TODO refer to userPicture.php
+
+            $transaction_values[':file_portrait'] = $transaction['file_portrait'];
         }
 
 

@@ -26,11 +26,11 @@ switch ($method) {
             exit;
         }
 
-        $allowedTypes = ['image/jpeg', 'image/png'];
+        $allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
         if (!$file || $file['error'] !== UPLOAD_ERR_OK || !in_array($file['type'], $allowedTypes)) {
             echo json_encode([
                 'success' => false,
-                'message' => 'Invalid file upload. Only JPEG and PNG images are allowed.',
+                'message' => 'Invalid file upload. Only JPEG, PNG, and PDF images are allowed.',
             ]);
             exit;
         }
@@ -45,6 +45,8 @@ switch ($method) {
         $prefix = match ($file['type']) {
             'image/jpeg' => 'data:image/jpeg;base64,',
             'image/png' => 'data:image/png;base64,',
+            // TODO test if application/pdf to png works 
+            'application/pdf' => 'data:image/png;base64,',
             default => '',
         };
 

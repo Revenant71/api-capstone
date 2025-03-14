@@ -38,6 +38,10 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                 
                 if ($data) {
                   foreach ($data as &$row) {
+                    if (isset($data['user_courses'])) {
+                        $data['user_courses'] = explode(',', $data['user_courses']);
+                    }
+
                     if (isset($row['img_profile'])) {
                         // Assume the data is already base64-encoded with a prefix
                         continue;
@@ -51,6 +55,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
 
                 if ($data) {
                   foreach ($data as &$row) {
+                    if (isset($row['user_courses'])) {
+                        // Convert user_courses to an array
+                        $row['user_courses'] = explode(',', $row['user_courses']);
+                    }
+
                     if (isset($row['img_profile'])) {
                         // Assume the data is already base64-encoded with a prefix
                         continue;
@@ -73,11 +82,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $qy = "INSERT INTO users(
             firstname, middlename, lastname,
             email, phone, password, account_type, 
-            created_at, updated_at) 
+            created_at, updated_at, user_courses) 
             VALUES(
             :firstname, :middlename, :lastname,
             :email, :phone, :pass, :role,
-            :created, :updated)";
+            :created, :updated, :user_courses)";
             // :pfp,
 
             // TODO insert default pfp for new users
@@ -101,6 +110,9 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $token = createRememberToken();
             $created_at = date('Y-m-d H:i:s');            
             $updated_at = date('Y-m-d H:i:s');
+            
+            // Convert selected courses to a comma-separated string
+            $user_courses = isset($user->courses) ? implode(',', $user->courses) : '';
 
             $stmt = $db_connection->prepare($qy);
             $stmt->bindParam(':firstname', $user->staffFirstName);
@@ -113,6 +125,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             $stmt->bindParam(':role', $user->staffRole);
             $stmt->bindParam(':created', $created_at); 
             $stmt->bindParam(':updated', $updated_at);
+            $stmt->bindParam(':user_courses', $user_courses);
 
             if ($stmt->execute()) {
                 try {
@@ -186,6 +199,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
                                 'role' => $user->staffRole,
                                 'createdAt' => $created_at,
                                 'updatedAt' => $updated_at,
+                                'user_courses' => $user_courses ? explode(',', $user_courses) : [],
                             ]
                         ];
                     }
@@ -239,6 +253,10 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
             if (isset($user->userPhone)) {
                 $query .= "phone=:phone, ";
                 $params[':phone'] = $user->userPhone;
+            }
+            if (isset($user->user_courses)) {
+                $query .= "user_courses=:user_courses, ";
+                $params[':user_courses'] = implode(',', $user->user_courses);
             }
             // if (isset($user->userRole)) {
             //     $query .= "account_type=:role, ";
