@@ -21,6 +21,12 @@ switch ($method) {
         $refNumber = $_POST['refNumber'] ?? null;
         $trackingName = $_POST['trackingName'] ?? null;
 
+        if (!$file) {
+            echo json_encode(['success' => false, 'message' => 'No file uploaded.']);
+            exit;
+        }
+        
+
         if (!$refNumber) {
             echo json_encode(['success' => false, 'message' => 'Reference number is required.']);
             exit;
@@ -47,11 +53,12 @@ switch ($method) {
             $pdfPath = $file['tmp_name'];
             $outputPngPath = sys_get_temp_dir() . '/' . uniqid('pdf_', true) . '.png';
 
-            $command = "gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r150 -sOutputFile=\"$outputPngPath\" \"$pdfPath\"";
+            $command = "gswin64c -dNOPAUSE -dBATCH -sDEVICE=png16m -r150 -sOutputFile=\"$outputPngPath\" \"$pdfPath\"";
             exec($command, $output, $return_var);
 
             if ($return_var !== 0) {
-                throw new Exception('Failed to convert PDF to PNG using Ghostscript.');
+                // throw new Exception('Failed to convert PDF to PNG using Ghostscript.');
+                echo "Ghostscript Error: " . implode("\n", $output);
             }
 
             // Read the PNG content and encode it to base64
