@@ -25,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Handle GET requests to fetch courses
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
-        $query = "SELECT id, course_name FROM courses ORDER BY id ASC";
+        $query = "SELECT id, course_name FROM courses ORDER BY course_name ASC";
         $stmt = $db_connection->prepare($query);
         $stmt->execute();
         $result = $stmt->fetchAll(PDO::FETCH_ASSOC);

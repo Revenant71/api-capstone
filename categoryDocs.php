@@ -11,8 +11,8 @@ header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: *");
 header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
 
-    $db_attempt = new connectDb;
-    $db_connection = $db_attempt->connect(); 
+$db_attempt = new connectDb;
+$db_connection = $db_attempt->connect(); 
 
 
     $method = $_SERVER['REQUEST_METHOD'];
@@ -35,6 +35,10 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
             $stmt->execute();
             $data = $found_id ? $stmt->fetch(PDO::FETCH_ASSOC) : $stmt->fetchAll(PDO::FETCH_ASSOC);
         
+            foreach ($data as &$doc) {
+                $doc['multi_purpose'] = isset($doc['multi_purpose']) ? (int)$doc['multi_purpose'] : 0;
+            }
+
             echo json_encode($data);
             break;
         
@@ -44,17 +48,18 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
         
             if ($data) {
                 // Log incoming data for debugging
-                error_log(print_r($data, true));
+                // error_log(print_r($data, true));
         
                 // Validate the data
                 if (isset($data['name'], $data['price'], $data['processing_days'], $data['pages'])) {
                     // SQL query to insert the document into categories_docs
-                    $qy = "INSERT INTO categories_docs(name, price, processing_days, pages, luzon_price, visayas_price, mindanao_price) 
-                           VALUES(:name, :price, :processing_days, :pages, :luzon_price, :visayas_price, :mindanao_price)";
+                    $qy = "INSERT INTO categories_docs(name, price, processing_days, pages, luzon_price, visayas_price, mindanao_price, multi_purpose) 
+                           VALUES(:name, :price, :processing_days, :pages, :luzon_price, :visayas_price, :mindanao_price, :multi_purpose)";
                 
+                    $stmt = $db_connection->prepare($qy);
+                    $multi_purpose = isset($data['multi_purpose']) ? (int)$data['multi_purpose'] : 0;
                     $empty_int = 0;
 
-                    $stmt = $db_connection->prepare($qy);
                     $stmt->bindParam(':name', $data['name']);
                     $stmt->bindParam(':price', $data['price']);
                     $stmt->bindParam(':processing_days', $data['processing_days'], PDO::PARAM_INT);
@@ -62,6 +67,7 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
                     $stmt->bindParam(':luzon_price', $empty_int);
                     $stmt->bindParam(':visayas_price', $empty_int);
                     $stmt->bindParam(':mindanao_price', $empty_int);
+                    $stmt->bindParam(':multi_purpose', $multi_purpose);
 
                     // Execute the query and check for success$empty_int
                     if ($stmt->execute()) {
@@ -245,6 +251,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
             $found_id = isset($URI_array[3]) ? $URI_array[3] : null;
             
             if ($found_id && is_numeric($found_id)) {
+                $multi_purpose = isset($category->multi_purpose) ? (int)$category->multi_purpose : 0;
+                if ($multi_purpose !== 0 && $multi_purpose !== 1) {
+                    $multi_purpose = 0;
+                }  
+                
                 $hidden = isset($category->hidden) ? (int)$category->hidden : 0;
 
                 // Update query for editing an existing record
@@ -255,7 +266,8 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
                 pages=:pages, 
                 luzon_price=:luzon_price, 
                 visayas_price=:visayas_price, 
-                mindanao_price=:mindanao_price, 
+                mindanao_price=:mindanao_price,
+                multi_purpose = :multi_purpose,  
                 updated_at=:updated";
     
             // Check if 'hidden' property is present before adding to the query
@@ -277,10 +289,11 @@ header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
             $stmt->bindParam(':processing_days', $category->processing_days, PDO::PARAM_INT);
             $stmt->bindParam(':pages', $category->pages, PDO::PARAM_INT);  
             $stmt->bindParam(':updated', $updated_at);
-            $stmt->bindParam(':luzon_price', $empty_int);  
-            $stmt->bindParam(':visayas_price', $empty_int);  
-            $stmt->bindParam(':mindanao_price', $empty_int);  
-            
+            $stmt->bindParam(':luzon_price', $empty_int, PDO::PARAM_INT);  
+            $stmt->bindParam(':visayas_price', $empty_int, PDO::PARAM_INT);  
+            $stmt->bindParam(':mindanao_price', $empty_int, PDO::PARAM_INT);  
+            $stmt->bindParam(':multi_purpose', $multi_purpose, PDO::PARAM_INT);
+
               if (isset($category->hidden)) {
                 $stmt->bindParam(':hidden', $category->hidden);
               }

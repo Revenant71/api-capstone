@@ -23,7 +23,7 @@ switch ($method) {
 
         if (isset($found_reference_no)) {
             $qy = "
-            SELECT z
+            SELECT
                 TCN.*, 
                 DOC.title AS DOC_title, 
                 DOC.author AS DOC_author,
@@ -70,6 +70,16 @@ switch ($method) {
                     }
                 }
             }
+
+            // Process file_receipt if it exists
+            // if ($data && isset($data['file_receipt'])) {
+            //     $data['file_receipt'] = encodeImageToBase64($data['file_receipt']);
+            // }
+
+            // Process file_portrait if it exists
+            // if ($data && isset($data['file_portrait']) && !empty($data['file_portrait'])) {
+            //     $data['file_portrait'] = encodeImageToBase64($data['file_portrait']);
+            // }
         } else {
             $qy = "
             SELECT 
@@ -98,8 +108,17 @@ switch ($method) {
                 if (isset($row['file_receipt'])) {
                     $row['file_receipt'] = base64_encode($row['file_receipt']);
                 }
+
+                // if (isset($row['file_receipt'])) {
+                //     $row['file_receipt'] = encodeImageToBase64($row['file_receipt']);
+                // }
+    
+                // if (isset($row['file_portrait']) && !empty($row['file_portrait'])) {
+                //     $row['file_portrait'] = encodeImageToBase64($row['file_portrait']);
+                // }
             }
 
+            // debugging
             // file_put_contents('debugTransactions.log', 'Fetched data: ' . print_r($data, true) . PHP_EOL, FILE_APPEND);
             // if (json_last_error() !== JSON_ERROR_NONE) {
             //     file_put_contents('debugTransactionsEncode.log', 'JSON encoding error: ' . json_last_error_msg() . PHP_EOL, FILE_APPEND);
@@ -110,12 +129,32 @@ switch ($method) {
         echo json_encode($data);
         break;
     case 'POST':
-        // TODO optional file_portrait, refer to userPicture.php
         $transaction = json_decode(file_get_contents('php://input'), true);
-        // file_portrait,
-        // :file_portrait,
         // released_at,
         // :released_at,
+
+        if (!$transaction) {
+            http_response_code(400);
+            echo json_encode(['status' => 0, 'message' => 'Invalid JSON data received.']);
+            exit;
+        }
+
+        if (!empty($transaction['file_portrait'])) {
+            $base64String = $transaction['file_portrait'];
+        
+            // Validate Base64 image with prefix (Only JPEG or PNG allowed)
+            if (preg_match('/^data:image\/(jpeg|png);base64,/', $base64String, $matches)) {
+                $imageType = $matches[1]; // Extract the image type (jpeg or png)
+                // No decoding, storing the Base64 string directly
+                $transaction['file_portrait'] = $base64String;
+            } else {
+                http_response_code(400);
+                echo json_encode(['status' => 0, 'message' => 'Invalid image format. Only JPEG and PNG are allowed.']);
+                exit;
+            }
+        }
+
+
         $selectedDocsJson = !empty($transaction['selectedDocuments']) ? json_encode($transaction['selectedDocuments']) : '[]';
         $purposeJson = !empty($transaction['purpose']) ? json_encode($transaction['purpose']) : '[]';
         
@@ -163,7 +202,6 @@ switch ($method) {
             ':overdue_days' => 0,
             ':statusPayment' => 'Not Paid',
             ':statusTransit' => 'Request Placed',
-            // ':released_at' => null,
             ':created_at' => date('Y-m-d H:i:s'),
             ':updated_at' => date('Y-m-d H:i:s'),
         ];
@@ -213,11 +251,8 @@ switch ($method) {
             $transaction_values[':delivery_street'] = $transaction['delivery_street'];
         }  
         if (!empty($transaction['file_portrait'])) {
-            // TODO refer to userPicture.php
-
             $transaction_values[':file_portrait'] = $transaction['file_portrait'];
         }
-
 
         if ($stmt->execute(array_merge($default_values, $transaction_values))) {
             $response = ['status'=>1, 'message'=>'POST transaction successful.'];
@@ -497,4 +532,18 @@ switch ($method) {
         }
         break;
 }
+
+function encodeImageToBase64($imageData) {
+    // Detect image type using magic bytes
+    if (substr($imageData, 0, 2) === "\xFF\xD8") {
+        $imageType = 'jpeg';
+    } elseif (substr($imageData, 0, 8) === "\x89PNG\r\n\x1A\n") {
+        $imageType = 'png';
+    } else {
+        return null; // Invalid image data
+    }
+
+    return "data:image/$imageType;base64," . base64_encode($imageData);
+}
+
 ?>

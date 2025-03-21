@@ -41,24 +41,43 @@ switch ($method) {
         //     exit;
         // }
         
-        // Determine the correct prefix based on MIME type
-        $prefix = match ($file['type']) {
-            'image/jpeg' => 'data:image/jpeg;base64,',
-            'image/png' => 'data:image/png;base64,',
-            // TODO test if application/pdf to png works 
-            'application/pdf' => 'data:image/png;base64,',
-            default => '',
-        };
-
-        if (!$prefix) {
-            echo json_encode(['success' => false, 'message' => 'Unsupported file type.']);
-            exit;
-        }
-
         if ($file['error'] === UPLOAD_ERR_OK) {
-          // Read the file content as binary
-          $fileContent = file_get_contents($file['tmp_name']);
-          $base64EncodedFile = $prefix . base64_encode($fileContent);
+          if ($file['type'] === 'application/pdf') {
+            // Convert PDF to PNG using Ghostscript
+            $pdfPath = $file['tmp_name'];
+            $outputPngPath = sys_get_temp_dir() . '/' . uniqid('pdf_', true) . '.png';
+
+            $command = "gs -dNOPAUSE -dBATCH -sDEVICE=png16m -r150 -sOutputFile=\"$outputPngPath\" \"$pdfPath\"";
+            exec($command, $output, $return_var);
+
+            if ($return_var !== 0) {
+                throw new Exception('Failed to convert PDF to PNG using Ghostscript.');
+            }
+
+            // Read the PNG content and encode it to base64
+            $fileContent = file_get_contents($outputPngPath);
+            $base64EncodedFile = 'data:image/png;base64,' . base64_encode($fileContent);
+
+            // Clean up the temporary PNG file
+            unlink($outputPngPath);
+          } else {
+            // Read the file content as binary
+            $fileContent = file_get_contents($file['tmp_name']);
+    
+            // Determine the correct prefix based on MIME type
+            $prefix = match ($file['type']) {
+                'image/jpeg' => 'data:image/jpeg;base64,',
+                'image/png' => 'data:image/png;base64,',
+                default => '',
+            };
+    
+            if (!$prefix) {
+                echo json_encode(['success' => false, 'message' => 'Unsupported file type.']);
+                exit;
+            }
+    
+            $base64EncodedFile = $prefix . base64_encode($fileContent);
+          }
 
           $qy = "UPDATE transactions SET file_receipt = :fileReceipt WHERE reference_number = :refNumber AND lastname_owner = :trackingName";
 
