@@ -27,18 +27,28 @@ switch ($method) {
                 TCN.*, 
                 DOC.title AS DOC_title, 
                 DOC.author AS DOC_author,
-                DOC.category_id AS DOC_category_id
+                DOC.category_id AS DOC_category_id,
+                USER.firstname AS USER_firstname,
+                USER.middlename AS USER_middlename,
+                USER.lastname AS USER_lastname
             FROM transactions TCN
             LEFT JOIN documents DOC ON TCN.id_doc = DOC.id
+            LEFT JOIN users USER ON TCN.id_employee = USER.id
             WHERE TCN.reference_number = :reference
+
             UNION
-            SELECT 
+
+            SELECT
                 TCN.*, 
                 DOC.title AS DOC_title, 
                 DOC.author AS DOC_author,
-                DOC.category_id AS DOC_category_id
+                DOC.category_id AS DOC_category_id,
+                USER.firstname AS USER_firstname,
+                USER.middlename AS USER_middlename,
+                USER.lastname AS USER_lastname
             FROM transactions TCN
             RIGHT JOIN documents DOC ON TCN.id_doc = DOC.id
+            LEFT JOIN users USER ON TCN.id_employee = USER.id
             WHERE TCN.reference_number = :reference;
             ";
 
@@ -49,9 +59,6 @@ switch ($method) {
 
             // compress longblob data to base64 string
             if ($data && isset($data['file_receipt'])) {
-                // below will not work if the image is png 
-                // $data['file_receipt'] = 'data:image/jpeg;base64,' . base64_encode($data['file_receipt']);
-
                 foreach ($data as &$row) {
                     if (isset($row['file_receipt'])) {
                         // Remove any incorrect or extra prefix if it exists
@@ -77,26 +84,36 @@ switch ($method) {
             // }
 
             // Process file_portrait if it exists
-            // if ($data && isset($data['file_portrait']) && !empty($data['file_portrait'])) {
-            //     $data['file_portrait'] = encodeImageToBase64($data['file_portrait']);
-            // }
+            if ($data && isset($data['file_portrait']) && !empty($data['file_portrait'])) {
+                $data['file_portrait'] = encodeImageToBase64($data['file_portrait']);
+            }
         } else {
             $qy = "
-            SELECT 
+            SELECT
                 TCN.*, 
                 DOC.title AS DOC_title, 
                 DOC.author AS DOC_author,
-                DOC.category_id AS DOC_category_id
+                DOC.category_id AS DOC_category_id,
+                USER.firstname AS USER_firstname,
+                USER.middlename AS USER_middlename,
+                USER.lastname AS USER_lastname
             FROM transactions TCN
             LEFT JOIN documents DOC ON TCN.id_doc = DOC.id
+            LEFT JOIN users USER ON TCN.id_employee = USER.id
+
             UNION
-            SELECT 
+
+            SELECT
                 TCN.*, 
                 DOC.title AS DOC_title, 
                 DOC.author AS DOC_author,
-                DOC.category_id AS DOC_category_id
+                DOC.category_id AS DOC_category_id,
+                USER.firstname AS USER_firstname,
+                USER.middlename AS USER_middlename,
+                USER.lastname AS USER_lastname
             FROM transactions TCN
-            RIGHT JOIN documents DOC ON TCN.id_doc = DOC.id;
+            RIGHT JOIN documents DOC ON TCN.id_doc = DOC.id
+            LEFT JOIN users USER ON TCN.id_employee = USER.id;
             ";
 
             $stmt = $db_connection->prepare($qy);
@@ -113,9 +130,9 @@ switch ($method) {
                 //     $row['file_receipt'] = encodeImageToBase64($row['file_receipt']);
                 // }
     
-                // if (isset($row['file_portrait']) && !empty($row['file_portrait'])) {
-                //     $row['file_portrait'] = encodeImageToBase64($row['file_portrait']);
-                // }
+                if (isset($row['file_portrait']) && !empty($row['file_portrait'])) {
+                    $row['file_portrait'] = encodeImageToBase64($row['file_portrait']);
+                }
             }
 
             // debugging
