@@ -11,7 +11,7 @@ $db_connection = $db_attempt->connect();
 
 // Check if the connection was successful
 if (!$db_connection) {
-    file_put_contents('error_log.txt', '[' . date('Y-m-d H:i:s') . '] DB Connection Error: ' . $db_attempt->error . PHP_EOL, FILE_APPEND);
+    // file_put_contents('error_log.txt', '[' . date('Y-m-d H:i:s') . '] DB Connection Error: ' . $db_attempt->error . PHP_EOL, FILE_APPEND);
     die(json_encode(["status" => "error", "message" => "Database connection failed"]));
 }
 

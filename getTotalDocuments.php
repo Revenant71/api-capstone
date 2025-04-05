@@ -25,11 +25,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     try {
         $query = "SELECT 
-            COUNT(id) AS total_requests,
-              SUM(CASE WHEN statusTransit = 'Request Placed' THEN 1 ELSE 0 END) AS total_unread,
-              SUM(CASE WHEN statusTransit = 'In Review' THEN 1 ELSE 0 END) AS total_review,
-              SUM(CASE WHEN statusTransit = 'Completed' THEN 1 ELSE 0 END) AS total_unclaimed  
-            FROM transactions";
+            SUM(total_requests) AS total_requests,
+            SUM(total_unread) AS total_unread,
+            SUM(total_review) AS total_review,
+            SUM(total_unclaimed) AS total_unclaimed
+        FROM (
+            SELECT 
+                reference_number,
+                COUNT(DISTINCT reference_number) AS total_requests,
+                SUM(CASE WHEN statusTransit = 'Request Placed' THEN 1 ELSE 0 END) AS total_unread,
+                SUM(CASE WHEN statusTransit = 'In Review' THEN 1 ELSE 0 END) AS total_review,
+                SUM(CASE WHEN statusTransit = 'Completed' OR overdue_days > 0 THEN 1 ELSE 0 END) AS total_unclaimed
+            FROM transactions
+            GROUP BY reference_number
+        ) AS grouped_results;
+        ";
         $stmt = $db_connection->prepare($query);
         $stmt->execute();
         $result = $stmt->fetch(PDO::FETCH_ASSOC);

@@ -8,8 +8,6 @@ header("Access-Control-Allow-Methods: GET");
 $db_attempt = new connectDb;
 $db_connection = $db_attempt->connect();
 
-// $conn->set_charset("utf8"); // Ensure UTF-8 encoding
-
 // Check connection
 if (!$db_connection) {
     die(json_encode(["error" => "Connection failed."]));
