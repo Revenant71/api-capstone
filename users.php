@@ -10,7 +10,7 @@ use OTPHP\TOTP;
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Content-Type: application/json");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
-header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE");
+header("Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, PUT");
 
 $db_attempt = new connectDb;
 $db_connection = $db_attempt->connect(); 
@@ -323,5 +323,67 @@ switch ($method) {
         }
 
         exit;
+
+    case 'PUT':
+        // Get raw input and decode JSON
+        $input = file_get_contents('php://input');
+        $user = json_decode($input);
+            
+        // Validate JSON
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            http_response_code(400);
+            echo json_encode(['status' => 0, 'message' => 'Invalid JSON format']);
+            exit;
+        }
+            
+        // Extract ID from URL
+        $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+        $segments = explode('/', trim($path, '/'));
+        $found_id = end($segments);
+            
+        // Validate ID
+        if (!is_numeric($found_id)) {
+            http_response_code(400);
+            echo json_encode(['status' => 0, 'message' => 'Invalid user ID format']);
+            exit;
+        }
+        $found_id = (int)$found_id;
+            
+        // Validate courses
+        if (!isset($user->courses) || !is_array($user->courses)) {
+            http_response_code(400);
+            echo json_encode(['status' => 0, 'message' => 'Courses array is required']);
+            exit;
+        }
+            
+        // Process course IDs
+        $validCourses = array_map('intval', $user->courses);
+            
+        try {
+            $stmt = $db_connection->prepare(
+                "UPDATE users SET user_courses = :courses, updated_at = NOW() WHERE id = :id"
+            );
+
+            $stmt->execute([
+                ':courses' => implode(',', $validCourses),
+                ':id' => $found_id
+            ]);
+                
+            echo json_encode([
+                'status' => 1,
+                'message' => 'Courses updated successfully',
+                'user_id' => $found_id,
+                'courses' => $validCourses
+            ]);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 0,
+                'message' => 'Database error',
+                'error' => $e->getMessage()
+            ]);
+        }
+        
+        break;
 }
 ?>

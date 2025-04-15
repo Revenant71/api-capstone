@@ -115,13 +115,12 @@ switch ($method) {
             exit;
         }
 
-        // fetchAll(PDO::FETCH_ASSOC)
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         if (!empty($data)) {
             echo json_encode(["status" => "success", "data" => $data]);
         } else {
-            echo json_encode(["status" => "success", "message" => "No records found", "data" => []]);
+            echo json_encode(["status" => "error", "message" => "No records found", "data" => []]);
         }
         
       break;
@@ -155,6 +154,11 @@ switch ($method) {
                     $values .= ", :ref";
                 }
     
+                if (!empty($action->feedback)) {
+                    $qy .= ", feedback";
+                    $values .= ", :feedback";
+                }
+
                 if (!empty($action->updated_by)) {
                     $qy .= ", updated_by";
                     $values .= ", :updated_by";
@@ -165,6 +169,11 @@ switch ($method) {
                     $values .= ", :updated_date";
                 }
     
+                if (!empty($action->due_date)) {
+                    $qy .= ", due_date";
+                    $values .= ", :due_date";
+                }
+
                 $qy .= ") VALUES ($values)";
     
                 $stmt = $db_connection->prepare($qy);
@@ -186,6 +195,10 @@ switch ($method) {
                         $stmt->bindParam(':ref', $action->ref, PDO::PARAM_STR);
                     }
     
+                    if (!empty($action->feedback)) {
+                        $stmt->bindParam(':feedback', $action->feedback, PDO::PARAM_STR);
+                    }
+
                     if (!empty($action->updated_by)) {
                         $stmt->bindParam(':updated_by', $action->updated_by, PDO::PARAM_INT);
                     }
@@ -194,6 +207,10 @@ switch ($method) {
                         $stmt->bindParam(':updated_date', $action->updated_date, PDO::PARAM_STR);
                     }
     
+                    if (!empty($action->due_date)) {
+                        $stmt->bindParam(':due_date', $action->due_date, PDO::PARAM_STR);
+                    }
+
                     if (!$stmt->execute()) {
                         echo json_encode(["status" => 0, "message" => "Failed to add workflow entry"]);
                     } else {

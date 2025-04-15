@@ -23,7 +23,14 @@ switch ($method){
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3] ?? null;
 
-        if (!$found_reference_no || empty($transaction['reason']) || empty($transaction['remarks']) || empty($transaction['staff']) || empty($transaction['owner_firstname']) || empty($transaction['owner_lastname']) || empty($transaction['requestor_email']) || empty($transaction['reason']) || empty($transaction['remarks']) || empty($transaction['receipt'])) {
+        if (!$found_reference_no ||
+         empty($transaction['reason']) ||
+         empty($transaction['remarks']) ||
+         empty($transaction['staff']) ||
+         empty($transaction['owner_firstname']) ||
+         empty($transaction['owner_lastname']) ||
+         empty($transaction['requestor_email'])
+         ) {
             echo json_encode(['status' => 0, 'message' => 'Invalid staff, reference number, reason, remarks, owner firstname, owner lastname, requestor email, reason, or remarks']);
             exit;
         }
@@ -58,12 +65,20 @@ switch ($method){
                 $mailReject->addReplyTo(REPLY_TO, REPLY_TO_NAME);
                 $mailReject->isHTML(true);
                 $mailReject->Subject = $found_reference_no . ' DocuQuest Rejected';
-  
+                
+                $receiptImageTag = '';
                 if (!empty($transaction['receipt'])) {
                     $imageData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $transaction['receipt']));
                 
                     // Attach image directly from memory without saving it
                     $mailReject->addStringEmbeddedImage($imageData, 'receipt_cid', 'receipt_'. $found_reference_no .'.png', 'base64', 'image/png');
+
+                    $receiptImageTag = '
+                    <tr>
+                        <td colspan="2" style="text-align: center;">
+                            <img src="cid:receipt_cid" title="Your previous receipt" alt="Receipt Image" style="max-width: 30%; max-height: 50%; height: auto; display: block; margin: 0 auto;">
+                        </td>
+                    </tr>';
                 }
                 
 
@@ -124,12 +139,9 @@ switch ($method){
                             <p>We regret to inform you that your request, '.$found_reference_no.' has been <strong>Rejected</strong>.</p>
                             <br/>
                             <em>Below are the details for this course of action:</em>
-                            <table>
-                                <tr>
-                                    <td colspan="2" style="text-align: center;">
-                                        <img src="cid:receipt_cid" title="Your previous receipt" alt="Receipt Image" style="max-width: 30%; max-height: 50%; height: auto; display: block; margin: 0 auto;">
-                                    </td>
-                                </tr>
+                            <table>'
+                            . $receiptImageTag .
+                            '
                                 <tr>
                                     <th>Reason</th>
                                     <td>'.$transaction['reason'].'</td>
@@ -166,7 +178,6 @@ switch ($method){
                 
 
                 if($mailReject->send()){
-                    // $response = ['status'=>1, 'message'=>`Reject statusTransit successful!`];
                     $response = ['status'=>1, 'message'=>`Emailed rejection successfully.`];
                 }
             } catch (Exception $e) {

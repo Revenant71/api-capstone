@@ -150,7 +150,12 @@ switch ($method) {
         // released_at,
         // :released_at,
 
+        $rawInput = file_get_contents('php://input');
+        //file_put_contents("debug_log.txt", "Received length: " . strlen($rawInput) . "\n", FILE_APPEND);
+
         if (!$transaction) {
+            //file_put_contents("debug_log.txt", "JSON decode failed. Raw input:\n" . $rawInput . "\n", FILE_APPEND);
+
             http_response_code(400);
             echo json_encode(['status' => 0, 'message' => 'Invalid JSON data received.']);
             exit;
@@ -160,11 +165,20 @@ switch ($method) {
             $base64String = $transaction['file_portrait'];
         
             // Validate Base64 image with prefix (Only JPEG or PNG allowed)
-            if (preg_match('/^data:image\/(jpeg|png);base64,/', $base64String, $matches)) {
+            if (preg_match('/^data:image\/(jpeg|png);base64,/i', $base64String, $matches)) {
                 $imageType = $matches[1]; // Extract the image type (jpeg or png)
-                // No decoding, storing the Base64 string directly
+                
+                // store base64 string directly
                 $transaction['file_portrait'] = $base64String;
             } else {
+                // Log the raw image string and reason
+                file_put_contents('debug_log.txt', json_encode([
+                    'status' => 'Image format failed',
+                    'received_header' => substr($base64String, 0, 100), // Just the first part for preview
+                    'content_length' => strlen($base64String),
+                    'hint' => 'Expected header: data:image/jpeg;base64 or data:image/png;base64'
+                ], JSON_PRETTY_PRINT), FILE_APPEND);
+
                 http_response_code(400);
                 echo json_encode(['status' => 0, 'message' => 'Invalid image format. Only JPEG and PNG are allowed.']);
                 exit;
@@ -175,6 +189,8 @@ switch ($method) {
         $selectedDocsJson = !empty($transaction['selectedDocuments']) ? json_encode($transaction['selectedDocuments']) : '[]';
         $purposeJson = !empty($transaction['purpose']) ? json_encode($transaction['purpose']) : '[]';
         
+        $purposeCount = isset($transaction['purposeCount']) ? (int)$transaction['purposeCount'] : 1;
+
         $qy = "
         INSERT INTO transactions (
             reference_number, service_type, delivery_region,
@@ -182,7 +198,7 @@ switch ($method) {
             name_req, phone_req, email_req, 
             firstname_owner, lastname_owner, phone_owner,
             course, course_year, year_last,
-            purpose_req, selected_docs,
+            purpose_req, selected_docs, purpose_count,
             statusPayment, statusTransit, id_employee, overdue_days, 
             created_at, updated_at, payment_channel
             " . (!empty($transaction['name_middle']) ? ", middlename_owner" : "") . "
@@ -199,7 +215,7 @@ switch ($method) {
             :name_req, :phone_req, :email_req,
             :firstname_owner, :lastname_owner, :phone_owner, 
             :course, :course_year, :year_last, 
-            :purpose_req, :selected_docs,
+            :purpose_req, :selected_docs, :purpose_count,
             :statusPayment, :statusTransit, :id_employee, :overdue_days, 
             :created_at, :updated_at, :payment_channel
             " . (!empty($transaction['name_middle']) ? ", :middlename_owner" : "") . "
@@ -242,6 +258,7 @@ switch ($method) {
             ':course_year' => $transaction['course_year'],
             ':year_last' => $transaction['year_last'],
             ':purpose_req' => $purposeJson,
+            ':purpose_count' => $purposeCount,
             ':payment_channel' => $transaction['payment_method'],
             ':selected_docs' => $selectedDocsJson
         ];
@@ -274,6 +291,12 @@ switch ($method) {
         if ($stmt->execute(array_merge($default_values, $transaction_values))) {
             $response = ['status'=>1, 'message'=>'POST transaction successful.'];
         } else {
+            // file_put_contents('debug_log.txt', json_encode([
+            //     'status' => 'SQL execution failed',
+            //     'pdo_error' => $stmt->errorInfo(),
+            //     'submitted_data' => array_merge($default_values, $transaction_values)
+            // ], JSON_PRETTY_PRINT), FILE_APPEND);
+
             $response = ['status'=>0, 'message'=>'SORRY, POST transaction failed.'];
         }
         
