@@ -34,6 +34,51 @@ function getCourseNames($courseIds, $db_connection) {
     return $courseNames;
 }
 
+function getUpdatedUserNames($updatedById, $db_connection) {
+    if (empty($updatedById) || !is_numeric($updatedById)) {
+        return [
+            'updated_user_firstname' => null,
+            'updated_user_middlename' => null,
+            'updated_user_lastname' => null
+        ];
+    }
+
+    try {
+        $query = "
+            SELECT firstname, middlename, lastname
+            FROM users
+            WHERE id = :id
+            LIMIT 1
+        ";
+
+        $stmt = $db_connection->prepare($query);
+        $stmt->bindParam(':id', $updatedById, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user && is_array($user)) {
+            return [
+                'updated_user_firstname' => $user['firstname'] ?? null,
+                'updated_user_middlename' => $user['middlename'] ?? null,
+                'updated_user_lastname' => $user['lastname'] ?? null
+            ];
+        } else {
+            return [
+                'updated_user_firstname' => null,
+                'updated_user_middlename' => null,
+                'updated_user_lastname' => null
+            ];
+        }
+    } catch (PDOException $e) {
+        return [
+            'updated_user_firstname' => null,
+            'updated_user_middlename' => null,
+            'updated_user_lastname' => null
+        ];
+    }
+}
+
 
 $method = $_SERVER['REQUEST_METHOD'];
 switch ($method) {
@@ -41,74 +86,80 @@ switch ($method) {
         $parsed_url = parse_url($_SERVER['REQUEST_URI']);
         $path = $parsed_url['path'];
         $URI_array = explode('/', $path);
-
+    
         $found_user = isset($_GET['userid']) && is_numeric($_GET['userid']) ? $_GET['userid'] : null;
-
+    
         $stats_query = "
             (SELECT COUNT(*) FROM users WHERE TRIM(user_courses) = '' OR user_courses IS NULL) AS unassigned_users,
             (SELECT COUNT(*) FROM workflow WHERE stage_now = stage_max) AS completed_workflows
         ";
-
+    
         if ($found_user) {
             $qy = "
-            SELECT 
-                WFL.*,
-                $stats_query,
-                U.user_courses AS user_courses,
-                U.firstname AS user_firstname,
-                U.middlename AS user_middlename,
-                U.lastname AS user_lastname,
-                U2.firstname AS updated_user_firstname,
-                U2.middlename AS updated_user_middlename,
-                U2.lastname AS updated_user_lastname
-            FROM workflow WFL
-            LEFT JOIN users U ON WFL.created_by = U.id 
-            LEFT JOIN users U2 ON WFL.updated_by = U2.id
-            WHERE WFL.created_by = :userid
-               OR WFL.updated_by = :userid
-            ORDER BY WFL.id ASC
+                SELECT 
+                    WFL.*,
+                    $stats_query,
+                    U.user_courses AS user_courses,
+                    U.firstname AS user_firstname,
+                    U.middlename AS user_middlename,
+                    U.lastname AS user_lastname,
+                    U2.firstname AS updated_user_firstname,
+                    U2.middlename AS updated_user_middlename,
+                    U2.lastname AS updated_user_lastname
+                FROM workflow WFL
+                LEFT JOIN users U ON WFL.created_by = U.id 
+                LEFT JOIN users U2 ON WFL.updated_by = U2.id
+                WHERE WFL.created_by = :userid
+                   OR WFL.updated_by = :userid
+                ORDER BY WFL.id ASC
             ";
-
+    
             $stmt = $db_connection->prepare($qy);
             $stmt->bindParam(':userid', $found_user, PDO::PARAM_INT);
-
+    
         } else {
             $qy = "
-            SELECT 
-                WFL.*,
-                $stats_query,
-                U.user_courses AS user_courses,
-                U.firstname AS user_firstname,
-                U.middlename AS user_middlename,
-                U.lastname AS user_lastname,
-                U2.firstname AS updated_user_firstname,
-                U2.middlename AS updated_user_middlename,
-                U2.lastname AS updated_user_lastname
-            FROM workflow WFL
-            LEFT JOIN users U ON WFL.created_by = U.id 
-            LEFT JOIN users U2 ON WFL.updated_by = U2.id
-            ORDER BY WFL.id ASC
+                SELECT 
+                    WFL.*,
+                    $stats_query,
+                    U.user_courses AS user_courses,
+                    U.firstname AS user_firstname,
+                    U.middlename AS user_middlename,
+                    U.lastname AS user_lastname,
+                    U2.firstname AS updated_user_firstname,
+                    U2.middlename AS updated_user_middlename,
+                    U2.lastname AS updated_user_lastname
+                FROM workflow WFL
+                LEFT JOIN users U ON WFL.created_by = U.id 
+                LEFT JOIN users U2 ON WFL.updated_by = U2.id
+                ORDER BY WFL.id ASC
             ";
-
+    
             $stmt = $db_connection->prepare($qy);
         }
-
+    
         if (!$stmt->execute()) {
             echo json_encode(["status" => "error", "message" => "Database query failed"]);
             exit;
         }
-
+    
         $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+    
         foreach ($data as &$row) {
+            // Handle user courses
             if (!empty($row['user_courses'])) {
                 $courseIds = explode(',', $row['user_courses']);
                 $row['user_course_names'] = getCourseNames($courseIds, $db_connection);
             } else {
                 $row['user_course_names'] = [];
             }
+    
+            // Ensure updated user names are at least null if missing
+            $row['updated_user_firstname'] = $row['updated_user_firstname'] ?? null;
+            $row['updated_user_middlename'] = $row['updated_user_middlename'] ?? null;
+            $row['updated_user_lastname'] = $row['updated_user_lastname'] ?? null;
         }
-
+    
         if (!empty($data)) {
             echo json_encode([
                 "status" => "success",
@@ -118,8 +169,10 @@ switch ($method) {
         } else {
             echo json_encode(["status" => "error", "message" => "No records found"]);
         }
-
+    
         break;
+    
+    
 
     case 'POST':
 

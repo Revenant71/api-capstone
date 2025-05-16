@@ -305,254 +305,82 @@ switch ($method) {
     
     case 'PATCH':
         $transaction = json_decode(file_get_contents('php://input'), true);
-
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3];
-
+        
         if (!$found_reference_no || empty($transaction['owner_lastname'])) {
             echo json_encode(['status' => 0, 'message' => 'Invalid reference number or owner lastname']);
             exit;
         }
-
-        // " . (!empty($transaction['file_receipt']) ? ", file_receipt" : "") . "
-        // " . (!empty($transaction['file_document']) ? ", file_document" : "") . "
-        // " . (!empty($transaction['file_receipt']) ? ", :file_receipt" : "") . "
-        // " . (!empty($transaction['file_document']) ? ", :file_document" : "") . "
         
-        $qy = "
-        UPDATE transactions
-        SET service_type = :service_type,
-            delivery_region = :delivery_region,
-            id_doc = :id_doc,
-            doc_name = :doc_name,
-            doc_quantity = :doc_quantity,
-            price = :price,
-            price_total = :price_total,
-            name_req = :name_req,
-            phone_req = :phone_req,
-            email_req = :email_req,
-            firstname_owner = :firstname_owner,
-            lastname_owner = :lastname_owner,
-            phone_owner = :phone_owner,
-            course = :course,
-            course_year = :course_year,
-            year_last = :year_last,
-            id_employee = :id_employee,
-            updated_at = NOW(),
-        ";
-        // payment_channel = :payment_channel,
-
-        if (!empty($transaction['statusPayment'])) {
-            $qy .= ", statusPayment = :statusPayment";
-        }
-        if (!empty($transaction['statusTransit'])) {
-            $qy .= ", statusTransit = :statusTransit";
-        }
-        if (!empty($transaction['owner_middlename'])) {
-            $qy .= ", middlename_owner = :middlename_owner";
-        }
-        if (!empty($transaction['owner_SWU'])) {
-            $qy .= ", id_swu = :id_swu";
-        }
-        if (!empty($transaction['description'])) {
-            $qy .= ", desc_req = :desc_req";
-        }
-        if (!empty($transaction['delivery_city'])) {
-            $qy .= ", delivery_city = :delivery_city";
-        }
-        if (!empty($transaction['delivery_district'])) {
-            $qy .= ", delivery_district = :delivery_district";
-        }
-        if (!empty($transaction['delivery_brgy'])) {
-            $qy .= ", delivery_district = :delivery_brgy";
-        }
-        if (!empty($transaction['delivery_street'])) {
-            $qy .= ", delivery_street = :delivery_street";
-        }
-        if (!empty($transaction['overdue_days'])) {
-            $qy .= ", overdue_days = :overdue_days";
-        }
-        // if (!empty($transaction['file_receipt'])) {
-        //     $qy .= ", file_receipt = :file_receipt";
-        // }
-        // if (!empty($transaction['file_portrait'])) {
-        //     $qy .= ", file_portrait = :file_portrait";
-        // }
-
-
-        $qy .= " WHERE reference_number = :reference_number AND lastname_owner = :lastname_owner";
-
-        $stmt = $db_connection->prepare($qy);
-
+        $qy = "UPDATE transactions SET ";
+        $setFields = [];
         $transaction_values = [
             ':reference_number' => $found_reference_no,
-            ':service_type' => $transaction['service'],
-            ':delivery_region' => $transaction['region'],
-            ':id_doc' => $transaction['doc_id'],
-            ':doc_name' => $transaction['doc_type'],
-            ':doc_quantity' => $transaction['doc_quantity'],
-            ':price' => $transaction['doc_price'],
-            ':price_total' => $transaction['total_price'],
-            ':name_req' => $transaction['requestor_name'],
-            ':phone_req' => $transaction['requestor_phone'],
-            ':email_req' => $transaction['requestor_email'],
-            ':firstname_owner' => $transaction['owner_firstname'],
             ':lastname_owner' => $transaction['owner_lastname'],
-            ':phone_owner' => $transaction['owner_phone'],
-            ':course' => $transaction['owner_course'],
-            ':course_year' => $transaction['owner_course_year'],
-            ':year_last' => $transaction['owner_year_last'],
-            ':id_employee' => $transaction['staff'],
         ];
-        // ':payment_channel' => $transaction['payment_method'],
-
-        if (!empty($transaction['statusPayment'])) {
-            $transaction_values[':statusPayment'] = $transaction['status_payment'];
+        
+        // Required fields
+        $fields = [
+            'service_type' => 'service_type',
+            'requestor_name' => 'name_req',
+            'requestor_phone' => 'phone_req',
+            'requestor_email' => 'email_req',
+            'owner_firstname' => 'firstname_owner',
+            'owner_phone' => 'phone_owner',
+            'owner_course' => 'course',
+            'owner_course_year' => 'course_year',
+            'owner_year_last' => 'year_last',
+            'staff' => 'id_employee'
+        ];
+        
+        foreach ($fields as $key => $dbField) {
+            if (!empty($transaction[$key])) {
+                $setFields[] = "$dbField = :$dbField";
+                $transaction_values[":$dbField"] = $transaction[$key];
+            }
         }
-        if (!empty($transaction['statusTransit'])) {
-            $transaction_values[':statusTransit'] = $transaction['status_transit'];
+        
+        // Optional fields
+        $optionalFields = [
+            'payment_method' => 'payment_channel',
+            'delivery_region' => 'delivery_region',
+            'delivery_city' => 'delivery_city',
+            'delivery_district' => 'delivery_district',
+            'delivery_brgy' => 'delivery_brgy',
+            'delivery_street' => 'delivery_street',
+            'currentDocId' => 'id_doc',
+            'currentDocument' => 'doc_name',
+            'currentQuantity' => 'doc_quantity',
+            'currentPrice' => 'price',
+            'total_price' => 'price_total',
+            'overdue_days' => 'overdue_days',
+            'statusPayment' => 'statusPayment',
+            'statusTransit' => 'statusTransit',
+            'owner_middlename' => 'middlename_owner',
+            'id_swu' => 'id_swu',
+            'description' => 'desc_req',
+        ];
+        
+        foreach ($optionalFields as $inputKey => $dbField) {
+            if (!empty($transaction[$inputKey])) {
+                $setFields[] = "$dbField = :$dbField";
+                $transaction_values[":$dbField"] = $transaction[$inputKey];
+            }
         }
-        if (!empty($transaction['owner_middlename'])) {
-            $transaction_values[':middlename_owner'] = $transaction['owner_middlename'];
-        }
-        if (!empty($transaction['owner_SWU'])) {
-            $transaction_values[':id_swu'] = $transaction['owner_SWU'];
-        }
-        if (!empty($transaction['description'])) {
-            $transaction_values[':desc_req'] = $transaction['description'];
-        }
-        if (!empty($transaction['delivery_city'])) {
-            $transaction_values[':delivery_city'] = $transaction['delivery_city'];
-        }
-        if (!empty($transaction['delivery_district'])) {
-            $transaction_values[':delivery_district'] = $transaction['delivery_district'];
-        }
-        if (!empty($transaction['delivery_brgy'])) {
-            $transaction_values[':delivery_brgy'] = $transaction['delivery_brgy'];
-        }
-        if (!empty($transaction['delivery_street'])) {
-            $transaction_values[':delivery_street'] = $transaction['delivery_street'];
-        }
-        if (!empty($transaction['overdue_days'])) {
-            $transaction_values[':overdue_days'] = $transaction['overdue_days'];
-        }
-        // if (!empty($transaction['file_receipt'])) {
-        //     $transaction_values[':file_receipt'] = base64_decode($transaction['file_receipt']);
-        // }
-        // if (!empty($transaction['file_portrait'])) {
-        //     $transaction_values[':file_portrait'] = base64_decode($transaction['file_portrait']);
-        // }
-
-        if ($stmt->execute($transaction_values)) {
-            // try {
-            //     $mailRespond = new PHPMailer(true);
-            //     $mailRespond->Host = MAILHOST;
-            //     $mailRespond->isSMTP();
-            //     $mailRespond->SMTPAuth = true;
-            //     $mailRespond->Username = USERNAME;
-            //     $mailRespond->Password = PASSWORD;
-            //     $mailRespond->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS encryption
-            //     $mailRespond->Port = 587;
-
-            //     $selectedDocsRows = '';
-            //     if (!empty($transaction['selected_docs']) && is_array($transaction['selected_docs'])) {
-            //         foreach ($transaction['selected_docs'] as $doc) {
-            //             $document = htmlspecialchars($doc['document']);
-            //             $quantity = htmlspecialchars($doc['quantity']);
-            //             $price = htmlspecialchars(number_format($doc['price'], 2));
-            //             $totalPrice = htmlspecialchars(number_format($doc['totalPrice'], 2));
-            //             $selectedDocsRows .= "
-            //             <tr>
-            //                 <td style='border: 1px solid #ddd; padding: 8px;'>{$document}</td>
-            //                 <td style='border: 1px solid #ddd; padding: 8px;'>{$quantity}</td>
-            //                 <td style='border: 1px solid #ddd; padding: 8px;'>{$price}</td>
-            //                 <td style='border: 1px solid #ddd; padding: 8px;'>{$totalPrice}</td>
-            //             </tr>";
-            //         }
-            //     } else {
-            //         $selectedDocsRows = '<tr><td colspan="4">No documents selected.</td></tr>';
-            //     }
-
-            //     // Add the final total row
-            //     $selectedDocsRows .= "
-            //     <tr>
-            //         <td colspan='3' style='border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;'>Total:</td>
-            //         <td style='border: 1px solid #ddd; padding: 8px; font-weight: bold;'>". htmlspecialchars(number_format($transaction['total_price'], 2)) ."</td>
-            //     </tr>";
-
-            //     // TODO if $transaction['region']) is not empty,
-            //     // query the transactions table and find the region and fee for the given $transaction['region'])
-            //     // then add a new <tr></tr> for the region and fee
-
-            //     // HTML table for selected documents
-            //     $selectedDocsTable = "
-            //     <table style='border-collapse: collapse; width: 100%;'>
-            //         <thead>
-            //             <tr>
-            //                 <th style='border: 1px solid #ddd; padding: 8px;'>Document</th>
-            //                 <th style='border: 1px solid #ddd; padding: 8px;'>Quantity</th>
-            //                 <th style='border: 1px solid #ddd; padding: 8px;'>Price</th>
-            //                 <th style='border: 1px solid #ddd; padding: 8px;'></th>
-            //             </tr>
-            //         </thead>
-            //         <tbody>
-            //             {$selectedDocsRows}
-            //         </tbody>
-            //     </table>";
-
-            //     // from, to, body
-            //     $mailRespond->setFrom(SEND_FROM, SEND_FROM_NAME);
-            //     $mailRespond->addAddress($transaction['requestor_email']);
-            //     $mailRespond->addReplyTo(REPLY_TO, REPLY_TO_NAME);
-            //     $mailRespond->isHTML(true);
-            //     $mailRespond->Subject = $transaction['reference'] . ' DocuQuest Update';
-            //     // TODO only show invoice if $transaction['status_transit'] === Accepted
-            //     // TODO if $transaction['status_transit'] === Rejected show remarks
-            //     $mailRespond->Body = '
-            //     <html>
-            //         <head>
-            //         <style>
-            //             ' . $css . '
-            //         </style>
-            //         </head>
-            //         <body> 
-            //             <strong>Your request '.$transaction['reference'].' is: '. $transaction['status_transit'] .'.</strong>
-            //             <br/><br/>
-            //             <p>This is an official sales invoice.</p>
-            //             ' . $selectedDocsTable . '
-            //             <br/>
-            //             <i>Please do not reply to this email.</i>
-            //         </body>
-            //     </html>
-            //     ';
-            //     $mailRespond->AltBody = '
-            //         <strong>Your request '.$transaction['reference'].' is: '. $transaction['status_transit'] .'.</strong>
-
-
-            //         This is an official sales invoice.
-
-            //         PLEASE DO NOT REPLY TO THIS EMAIL.
-            //     ';
-
-            //     if($mailRespond->send()){
-            //         $response = ['status'=>1, 'message'=>'PATCH transaction successful.'];
-            //     }
-
-            // } catch (Exception $e) {
-            //     $response = [
-            //         'status'=>0,
-            //         'message'=> "Message could not be sent to user. Mailer Error: {$mailRespond->ErrorInfo}",
-            //     ];
-            // }
-
-            $response = ['status'=>1, 'message'=>'PATCH transaction succeeded!'];
-        } else {
-            $response = ['status'=>0, 'message'=>'Sorry, PATCH transaction failed.'];
-        }
-
+        
+        $qy .= implode(", ", $setFields);
+        $qy .= " , updated_at = NOW() WHERE reference_number = :reference_number AND lastname_owner = :lastname_owner";
+        
+        $stmt = $db_connection->prepare($qy);
+        
+        $response = $stmt->execute($transaction_values)
+            ? ['status' => 1, 'message' => 'PATCH transaction succeeded!']
+            : ['status' => 0, 'message' => 'Sorry, PATCH transaction failed.'];
+        
         echo json_encode($response);
         break;
-
+        
     case 'DELETE':
         $URI_array = explode('/', $_SERVER['REQUEST_URI']);
         $found_reference_no = $URI_array[3];

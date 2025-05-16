@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(['status' => 'error', 'message' => 'Failed to add course']);
         }
     } catch (PDOException $e) {
-        file_put_contents('error_log.txt', '[' . date('Y-m-d H:i:s') . '] POST Error: ' . $e->getMessage() . PHP_EOL, FILE_APPEND);
+        //file_put_contents('error_log.txt', '[' . date('Y-m-d H:i:s') . '] POST Error: ' . $e->getMessage() . PHP_EOL, FILE_APPEND);
         echo json_encode(['status' => 'error', 'message' => 'Failed to add course']);
     }
     exit;
